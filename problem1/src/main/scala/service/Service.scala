@@ -41,15 +41,13 @@ object Service {
     case file if path.isFile() && path.exists() =>
       val fs = FileSize.ofFile(path)
       PathScan(SortedSet(fs), fs.size, 1)
-    case dir if path.isDirectory() && path.exists() =>
+    case dir if path.isDirectory() =>
       val optFiles = Option(dir.listFiles())
       optFiles.fold(PathScan.empty)(
         _.toList.foldMap(pathScan(_, topN))(PathScan.topNMonoid(topN)))
     case _ =>
       PathScan.empty
-
   }
-
 
 }
 
@@ -76,8 +74,6 @@ case class FileSize(path: File, size: Long)
 object FileSize {
 
   def ofFile(file: File) = {
-    assert(file.isFile)
-
     FileSize(file, file.length())
   }
 
