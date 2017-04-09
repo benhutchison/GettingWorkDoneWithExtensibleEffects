@@ -4,8 +4,8 @@ version := "0.1"
 
 scalaVersion := "2.12.1"
 
-lazy val problem1 = (project in file("problem1"))
+lazy val exercise1 = (project in file("exercise1"))
 
-lazy val problem2 = (project in file("problem2"))
+lazy val exercise2 = (project in file("exercise2"))
 
 
