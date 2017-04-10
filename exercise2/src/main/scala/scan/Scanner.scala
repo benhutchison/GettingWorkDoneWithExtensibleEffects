@@ -20,18 +20,17 @@ object Scanner {
 
   type R = Fx.fx2[Reader[Filesystem, ?], Reader[ScanConfig, ?]]
 
-  def main(args: Array[String]): Unit = {
-    println(scanReport(Directory(args(0)), 10))
-  }
+  def main(args: Array[String]): Unit = println(scanReport(Directory(args(0)), 10))
 
-  def scanReport(base: FilePath, topN: Int): String = {
+  def scanReport(base: FilePath, topN: Int): String =
+    ReportFormat.largeFilesReport(pathScan(base, topN, DefaultFilesystem), base.toString)
+
+  def pathScan(base: FilePath, topN: Int, fs: Filesystem): PathScan = {
     //build an Eff program (ie a data structure)
     val effScan: Eff[R, PathScan] = PathScan.scan[R](base)
 
     //execute the Eff expression by interpreting it
-    val scan = effScan.runReader(ScanConfig(topN)).runReader(DefaultFilesystem: Filesystem).run
-
-    ReportFormat.largeFilesReport(scan, base.toString)
+    effScan.runReader(ScanConfig(topN)).runReader(fs).run
   }
 }
 
