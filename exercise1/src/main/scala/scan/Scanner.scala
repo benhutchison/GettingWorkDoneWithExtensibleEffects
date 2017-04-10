@@ -1,4 +1,4 @@
-package service
+package scan
 
 import java.nio.file._
 
@@ -9,16 +9,17 @@ import cats._
 import cats.implicits._
 
 
-object Service {
+object Scanner {
 
   def main(args: Array[String]): Unit = {
-    val rootDir = Paths.get(args(0))
-    val scan = pathScan(rootDir, 10)
-
-    println(ReportFormat.largeFilesReport(scan, rootDir.toString))
+    println(scanReport(Paths.get(args(0)), 10))
   }
 
+  def scanReport(base: Path, topN: Int): String = {
+    val scan = pathScan(base, topN)
 
+    ReportFormat.largeFilesReport(scan, base.toString)
+  }
 
   def pathScan(path: Path, topN: Int): PathScan = path match {
     case file if Files.isRegularFile(path) =>
