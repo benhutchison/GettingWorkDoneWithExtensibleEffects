@@ -12,7 +12,7 @@ The first implementation doesn't use Eff at all. Each subsequent exercise layers
 
 ## Setup
 
-- You will need Simple Build Tool (`sbt`) [installed](http://www.scala-sbt.org/release/docs/Setup.html).
+- You will need Java 8+ and Simple Build Tool (`sbt`) [installed](http://www.scala-sbt.org/release/docs/Setup.html).
 
 - While SBT will download Scala and the Eff libraries on-demand, this can be a slow process. Before the workshop, it is recommended
 to run `sbt update` in the base directory to pre-download the required libraries. This may take a few minutes up to 1 hour,

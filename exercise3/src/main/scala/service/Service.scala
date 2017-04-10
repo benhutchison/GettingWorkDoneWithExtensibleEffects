@@ -18,7 +18,7 @@ import EffTypes._
 
 object Service {
 
-  type R = Fx.fx2[Reader[Filesystem, ?], Reader[ScanConfig, ?]]
+  type R = Fx.fx3[Reader[Filesystem, ?], Reader[ScanConfig, ?], Either[Throwable, ?]]
 
   def main(args: Array[String]): Unit = {
     val rootDir = new Directory(args(0))
@@ -27,9 +27,12 @@ object Service {
     val effScan: Eff[R, PathScan] = PathScan.scan[R](rootDir)
 
     //execute the Eff expression by interpreting it
-    val scan = effScan.runReader(ScanConfig(10)).runReader(DefaultFilesystem: Filesystem).run
+    val tryScan = effScan.runReader(ScanConfig(10)).runReader(DefaultFilesystem: Filesystem).runEither.run
 
-    println(ReportFormat.largeFilesReport(scan, rootDir.toString))
+    println(tryScan match {
+      case Right(scan) => ReportFormat.largeFilesReport(scan, rootDir.toString)
+      case Left(ex) => s"Scan of '$rootDir' failed: $ex"
+    })
   }
 }
 
@@ -74,7 +77,7 @@ object PathScan {
 
   def empty: PathScan = PathScan(SortedSet.empty, 0, 0)
 
-  def scan[R: _filesystem: _config](path: FilePath): Eff[R, PathScan] = path match {
+  def scan[R: _filesystem: _config: _throwableEither](path: FilePath): Eff[R, PathScan] = path match {
     case file: File =>
       for {
         fs <- FileSize.ofFile(file)
@@ -84,7 +87,8 @@ object PathScan {
       for {
         fs <- ask[R, Filesystem]
         topN <- PathScan.takeTopN
-        childScans <- fs.listFiles(dir).foldMapM(PathScan.scan[R](_))(Monad[Eff[R, ?]], topN)
+        files <- catchNonFatalThrowable(fs.listFiles(dir))
+        childScans <- files.foldMapM(PathScan.scan[R](_))(Monad[Eff[R, ?]], topN)
       } yield childScans
   }
 
@@ -105,9 +109,10 @@ case class FileSize(path: File, size: Long)
 
 object FileSize {
 
-  def ofFile[R: _filesystem](file: File): Eff[R, FileSize] = for {
+  def ofFile[R: _filesystem: _throwableEither](file: File): Eff[R, FileSize] = for {
     fs <- ask
-  } yield FileSize(file, fs.length(file))
+    size <- catchNonFatalThrowable(fs.length(file))
+  } yield FileSize(file, size)
 
   implicit val ordering: Ordering[FileSize] = Ordering.by[FileSize, Long  ](_.size).reverse
 }
