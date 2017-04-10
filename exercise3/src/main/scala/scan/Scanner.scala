@@ -20,23 +20,22 @@ object Scanner {
 
   type R = Fx.fx3[Reader[Filesystem, ?], Reader[ScanConfig, ?], Either[Throwable, ?]]
 
-  def main(args: Array[String]): Unit = {
-    println(scanReport(Directory(args(0)), 10))
-  }
+  def main(args: Array[String]): Unit = println(scanReport(Directory(args(0)), 10))
 
   def scanReport(base: FilePath, topN: Int): String = {
-    //build an Eff program (ie a data structure)
-    val effScan: Eff[R, PathScan] = PathScan.scan[R](base)
-
-    //execute the Eff expression by interpreting it
-    val tryScan = effScan.runReader(ScanConfig(10)).runReader(DefaultFilesystem: Filesystem).runEither.run
-
-    tryScan match {
+    pathScan(base, topN, DefaultFilesystem) match {
       case Right(scan) => ReportFormat.largeFilesReport(scan, base.path)
       case Left(ex) => s"Scan of '${base.path}' failed: $ex"
     }
   }
 
+  def pathScan(base: FilePath, topN: Int, fs: Filesystem): Either[Throwable, PathScan] = {
+    //build an Eff program (ie a data structure)
+    val effScan: Eff[R, PathScan] = PathScan.scan[R](base)
+
+    //execute the Eff expression by interpreting it
+    effScan.runReader(ScanConfig(10)).runReader(fs).runEither.run
+  }
 }
 
 object EffTypes {
