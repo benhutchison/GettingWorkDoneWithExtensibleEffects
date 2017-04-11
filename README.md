@@ -54,7 +54,7 @@ getting stuck, then reviewing the solution. So make use of the solutions if you 
 This project teaches Extensible Effects in practice; what it feels like to code with the Eff framework.
 
 It doesn't make any attempt to cover
-the complex, subtle theory behind Eff, a refinement of 25 years experience with monadic programming, and isn't a complete picture of Eff
+the complex, subtle theory behind Eff, a refinement of 25 years experience of programming with monads, and isn't a complete picture of Eff
 by any means. At the time of writing however, there are more resources available covering the theory, than practice, of Eff, including:
 
 - The original paper [Extensible effects: an alternative to monad transformers](https://www.cs.indiana.edu/~sabry/papers/exteff.pdf)
