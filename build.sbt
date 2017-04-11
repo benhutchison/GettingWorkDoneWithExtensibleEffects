@@ -30,3 +30,5 @@ lazy val exercise3 = (project in file("exercise3")).settings(commonSettings)
 
 lazy val exercise4 = (project in file("exercise4")).settings(commonSettings)
 
+lazy val exercise5 = (project in file("exercise5")).settings(commonSettings)
+
