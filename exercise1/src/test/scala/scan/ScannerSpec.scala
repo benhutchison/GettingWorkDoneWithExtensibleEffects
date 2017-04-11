@@ -9,7 +9,7 @@ import scala.collection.immutable.SortedSet
 
 class ScannerSpec extends mutable.Specification {
 
-  "Verify Report Format" ! {
+  "Report Format" ! {
     val base = deletedOnExit(Files.createTempDirectory("exercise1"))
     val base1 = deletedOnExit(fillFile(base, 1))
     val base2 = deletedOnExit(fillFile(base, 2))

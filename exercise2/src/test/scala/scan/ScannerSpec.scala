@@ -15,7 +15,7 @@ class ScannerSpec extends mutable.Specification {
     def listFiles(directory: Directory) = directories.getOrElse(directory, throw new IOException())
   }
 
-  "Verify Report Format" ! {
+  "Report Format" ! {
     val base = Directory("base")
     val base1 = File(s"${base.path}/1.txt")
     val base2 = File(s"${base.path}/2.txt")
