@@ -9,7 +9,10 @@ val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0",
     "org.typelevel" %% "cats" % "0.9.0",
+    "io.monix" %% "monix-eval" % "2.2.4",
+    "io.monix" %% "monix-cats" % "2.2.4",
     "org.atnos" %% "eff" % "4.1.0",
+    "org.atnos" %% "eff-monix" % "4.1.0",
     "org.specs2" %% "specs2-core" % "3.8.9" % "test"
   ),
   // to write types like Reader[String, ?]
@@ -24,4 +27,6 @@ lazy val exercise1 = (project in file("exercise1")).settings(commonSettings)
 lazy val exercise2 = (project in file("exercise2")).settings(commonSettings)
 
 lazy val exercise3 = (project in file("exercise3")).settings(commonSettings)
+
+lazy val exercise4 = (project in file("exercise4")).settings(commonSettings)
 
