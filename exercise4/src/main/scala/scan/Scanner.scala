@@ -98,7 +98,7 @@ object PathScan {
         fs <- ask[R, Filesystem]
         topN <- PathScan.takeTopN
         files <- catchNonFatalThrowable(fs.listFiles(dir))
-        concurrentChildScans <- Eff.traverseA(files)(file => taskSuspend(Task.delay(PathScan.scan[R](file))))
+        concurrentChildScans <- Eff.traverseA(files)(file => taskSuspend(Task.eval(PathScan.scan[R](file))))
       }
       yield concurrentChildScans.combineAll(topN)
   }
