@@ -30,12 +30,14 @@ object Scanner {
 
   def main(args: Array[String]): Unit = scanReport(Directory(args(0)), 10).map(println).runAsync
 
-  def scanReport(base: FilePath, topN: Int): Task[String] = {
-    pathScan(base, topN, DefaultFilesystem).map(_ match {
-      case Right(scan) => ReportFormat.largeFilesReport(scan, base.path)
-      case Left(ex) => s"Scan of '${base.path}' failed: $ex"
-    })
-  }
+  def scanReport(base: FilePath, topN: Int): Task[String] = for {
+    start <- Task.eval(System.currentTimeMillis)
+    result <- pathScan(base, topN, DefaultFilesystem)
+  } yield (result match {
+    case Right(scan) => ReportFormat.largeFilesReport(scan, base.path) +
+      s"\nElapsed ${System.currentTimeMillis - start}ms"
+    case Left(ex) => s"Scan of '${base.path}' failed: $ex"
+  })
 
   def pathScan(base: FilePath, topN: Int, fs: Filesystem): Task[Either[Throwable, PathScan]] = {
     //build an Eff program (ie a data structure)
@@ -72,10 +74,14 @@ case object DefaultFilesystem extends Filesystem {
 
   def length(file: File) = Files.size(Paths.get(file.path))
 
-  def listFiles(directory: Directory) = Files.list(Paths.get(directory.path)).toScala[List].flatMap {
-    case dir if Files.isDirectory(dir) => List(Directory(dir.toString))
-    case file if Files.isRegularFile(file) => List(File(file.toString))
-    case _ => List.empty
+  def listFiles(directory: Directory) = {
+    val files = Files.list(Paths.get(directory.path))
+    try files.toScala[List].flatMap {
+      case dir if Files.isDirectory(dir) => List(Directory(dir.toString))
+      case file if Files.isRegularFile(file) => List(File(file.toString))
+      case _ => List.empty
+    }
+    finally files.close()
   }
 }
 
@@ -87,7 +93,7 @@ object PathScan {
 
   def empty: PathScan = PathScan(SortedSet.empty, 0, 0)
 
-  def scan[R: _filesystem: _config: _throwableEither: _task](path: FilePath): Eff[R, PathScan] = path match {
+  def scan[R: _filesystem: _config: _throwableEither: _Task](path: FilePath): Eff[R, PathScan] = path match {
     case file: File =>
       for {
         fs <- FileSize.ofFile(file)
@@ -114,6 +120,14 @@ object PathScan {
       p1.totalCount + p2.totalCount
     )
   }
+
+  //Intercepts all Tasks within `e` and returns an Eff expression ensuring they `fork` into a thread switch when invoked
+  def taskFork[R: _Task, A](e: Eff[R, A]): Eff[R, A] =
+    interpret.interceptNat[R, Task, A](e)(
+      new (Task ~> Task) {
+        def apply[X](fa: Task[X]): Task[X] =
+          Task.fork(fa)
+      })
 }
 
 case class FileSize(path: File, size: Long)
