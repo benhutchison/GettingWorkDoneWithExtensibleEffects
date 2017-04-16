@@ -51,3 +51,7 @@ need.
 
 
 4. Run the test to verify your changes are working correctly
+
+5. Optional:  Examine the `DefaultFilesystem.listFiles` method and note the try/finally construct. The reason for this is
+that `listFiles` returns a `Stream` of the directory contents, which holds open a file handle until the stream is cleaned up.
+
