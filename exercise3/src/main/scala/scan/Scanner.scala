@@ -64,10 +64,14 @@ case object DefaultFilesystem extends Filesystem {
 
   def length(file: File) = Files.size(Paths.get(file.path))
 
-  def listFiles(directory: Directory) = Files.list(Paths.get(directory.path)).toScala[List].flatMap {
-    case dir if Files.isDirectory(dir) => List(Directory(dir.toString))
-    case file if Files.isRegularFile(file) => List(File(file.toString))
-    case _ => List.empty
+  def listFiles(directory: Directory) = {
+    val files = Files.list(Paths.get(directory.path))
+    try files.toScala[List].flatMap {
+      case dir if Files.isDirectory(dir) => List(Directory(dir.toString))
+      case file if Files.isRegularFile(file) => List(File(file.toString))
+      case _ => List.empty
+    }
+    finally files.close()
   }
 }
 

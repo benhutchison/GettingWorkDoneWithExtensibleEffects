@@ -19,7 +19,7 @@ a computation using this effect occurs (a type like this containing unfilled par
 [calling code](https://github.com/benhutchison/GettingWorkDoneWithExtensibleEffects/blob/master/exercise3/src/main/scala/scan/Scanner.scala#L25)
 is forced to deal with the possiblity of error, because the interpretation result becomes an `Either`.
 
--  Despite wrapping an `Either` around the scan result, note how the return type of [PathScan.scan](https://github.com/benhutchison/GettingWorkDoneWithExtensibleEffects/blob/master/exercise3/src/main/scala/scan/Scanner.scala#L82)
+-  Despite wrapping an `Either` around the scan result, note how the return type of [PathScan.scan](https://github.com/benhutchison/GettingWorkDoneWithExtensibleEffects/blob/master/exercise3/src/main/scala/scan/Scanner.scala#L86)
  remains unchanged from the previous version, as `Eff[R, PathScan]`. This is a notable feature of the Eff-style of programming;
  the Eff expression just specifies the stack type (`R`) and the payload type (`PathScan` here). To understand fully what
  effects are going on, it's necessary to look at what `Member` typeclasses are declared on the `R` type.
