@@ -11,8 +11,8 @@ val commonSettings = Seq(
     "org.typelevel" %% "cats" % "0.9.0",
     "io.monix" %% "monix-eval" % "2.2.4",
     "io.monix" %% "monix-cats" % "2.2.4",
-    "org.atnos" %% "eff" % "4.1.0",
-    "org.atnos" %% "eff-monix" % "4.1.0",
+    "org.atnos" %% "eff" % "4.2.0",
+    "org.atnos" %% "eff-monix" % "4.2.0",
     "org.specs2" %% "specs2-core" % "3.8.9" % "test"
   ),
   // to write types like Reader[String, ?]
