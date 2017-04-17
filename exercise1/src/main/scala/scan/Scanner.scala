@@ -42,11 +42,7 @@ object PathScan {
   def topNMonoid(n: Int): Monoid[PathScan] = new Monoid[PathScan] {
     def empty: PathScan = PathScan.empty
 
-    def combine(p1: PathScan, p2: PathScan): PathScan = PathScan(
-      p1.largestFiles.union(p2.largestFiles).take(n),
-      p1.totalSize + p2.totalSize,
-      p1.totalCount + p2.totalCount
-    )
+    def combine(p1: PathScan, p2: PathScan): PathScan = ???
   }
 
 }
