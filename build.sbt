@@ -32,3 +32,13 @@ lazy val exercise4 = (project in file("exercise4")).settings(commonSettings)
 
 lazy val exercise5 = (project in file("exercise5")).settings(commonSettings)
 
+lazy val solutionExercise1 = (project in file("solutions/exercise1")).settings(commonSettings)
+
+lazy val solutionExercise2 = (project in file("solutions/exercise2")).settings(commonSettings)
+
+lazy val solutionExercise3 = (project in file("solutions/exercise3")).settings(commonSettings)
+
+lazy val solutionExercise4 = (project in file("solutions/exercise4")).settings(commonSettings)
+
+lazy val solutionExercise5 = (project in file("solutions/exercise5")).settings(commonSettings)
+
