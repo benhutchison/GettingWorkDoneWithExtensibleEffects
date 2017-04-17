@@ -83,20 +83,20 @@ object PathScan {
   def scan[R: _filesystem: _config](path: FilePath): Eff[R, PathScan] = path match {
     case file: File =>
       for {
-        fs <- FileSize.ofFile(file)
+        fs <- ask[R, Filesystem]
+        filesize = FileSize.ofFile(file, fs)
       }
-      yield PathScan(SortedSet(fs), fs.size, 1)
+      yield PathScan(SortedSet(filesize), filesize.size, 1)
     case dir: Directory =>
       for {
         fs <- ask[R, Filesystem]
-        topN <- PathScan.takeTopN
+        scanConfig <- ask[R, ScanConfig]
+        topN = PathScan.takeTopN(scanConfig)
         childScans <- fs.listFiles(dir).foldMapM(PathScan.scan[R](_))(Monad[Eff[R, ?]], topN)
       } yield childScans
   }
 
-  def takeTopN[R: _config]: Eff[R, Monoid[PathScan]] = for {
-    scanConfig <- ask
-  } yield new Monoid[PathScan] {
+  def takeTopN(scanConfig: ScanConfig): Monoid[PathScan] = new Monoid[PathScan] {
     def empty: PathScan = PathScan.empty
 
     def combine(p1: PathScan, p2: PathScan): PathScan = PathScan(
@@ -111,9 +111,7 @@ case class FileSize(path: File, size: Long)
 
 object FileSize {
 
-  def ofFile[R: _filesystem](file: File): Eff[R, FileSize] = for {
-    fs <- ask
-  } yield FileSize(file, fs.length(file))
+  def ofFile(file: File, fs: Filesystem): FileSize =  FileSize(file, fs.length(file))
 
   implicit val ordering: Ordering[FileSize] = Ordering.by[FileSize, Long  ](_.size).reverse
 }
