@@ -36,25 +36,26 @@ object Scanner {
     }).runAsync
   }
 
-  def scanReport(base: FilePath, topN: Int): Task[(String, List[Log])] = {
-    for {
-      s <- pathScan(base, topN, DefaultFilesystem)
-      (result, logs) = s
-    } yield {
-      val resultText = result match {
-        case Right(scan) => ReportFormat.largeFilesReport(scan, base.path)
-        case Left(ex) => s"Scan of '${base.path}' failed: $ex"
-      }
-      (resultText, logs)
-    }
-  }
+  def scanReport(base: FilePath, topN: Int): Task[(String, List[Log])] = for {
+    start <- Task.eval(System.currentTimeMillis)
+
+    //unfortunately Scala doesn't handle pattern matching of tuples in for-expressions well
+    //this two stage form allows the parts of the pair to be named
+    s <- pathScan(base, topN, DefaultFilesystem)
+    (result, logs) = s
+
+  } yield (result match {
+    case Right(scan) => ReportFormat.largeFilesReport(scan, base.path) +
+      s"\nElapsed ${System.currentTimeMillis - start}ms"
+    case Left(ex) => s"Scan of '${base.path}' failed: $ex"
+  }, logs)
 
   def pathScan(base: FilePath, topN: Int, fs: Filesystem): Task[(Either[Throwable, PathScan], List[Log])] = {
     //build an Eff program (ie a data structure)
     val effScan: Eff[R, PathScan] = tell[R, Log](Log.info(s"Scan started on $base")) >> PathScan.scan[R](base)
 
     //execute the Eff expression by interpreting it
-    effScan.runReader(ScanConfig(topN)).runReader(fs).runEither.runWriter[Log].runAsync
+    effScan.runReader(ScanConfig(topN)).runReader(fs).runEither.runWriter.runAsync
   }
 }
 
@@ -94,10 +95,14 @@ case object DefaultFilesystem extends Filesystem {
 
   def length(file: File) = Files.size(Paths.get(file.path))
 
-  def listFiles(directory: Directory) = Files.list(Paths.get(directory.path)).toScala[List].flatMap {
-    case dir if Files.isDirectory(dir) => List(Directory(dir.toString))
-    case file if Files.isRegularFile(file) => List(File(file.toString))
-    case _ => List.empty
+  def listFiles(directory: Directory) = {
+    val files = Files.list(Paths.get(directory.path))
+    try files.toScala[List].flatMap {
+        case dir if Files.isDirectory(dir) => List(Directory(dir.toString))
+        case file if Files.isRegularFile(file) => List(File(file.toString))
+        case _ => List.empty
+      }
+    finally files.close()
   }
 }
 
@@ -109,7 +114,7 @@ object PathScan {
 
   def empty: PathScan = PathScan(SortedSet.empty, 0, 0)
 
-  def scan[R: _filesystem: _config: _throwableEither: _task: _log](path: FilePath): Eff[R, PathScan] = path match {
+    def scan[R: _filesystem: _config: _throwableEither: _Task: _log](path: FilePath): Eff[R, PathScan] = path match {
     case file: File =>
       for {
         fs <- FileSize.ofFile(file)
@@ -126,7 +131,7 @@ object PathScan {
           val fileCount = files.count(_.isInstanceOf[File])
           tell(Log.debug(s"Scanning directory '$dir': $dirCount subdirectories and $fileCount files"))
         }
-        concurrentChildScans <- Eff.traverseA(files)(file => taskSuspend(Task.delay(PathScan.scan[R](file))))
+        concurrentChildScans <- Eff.traverseA(files)(file => taskFork(taskSuspend(Task.eval(PathScan.scan[R](file)))))
       }
       yield concurrentChildScans.combineAll(topN)
   }
@@ -142,6 +147,14 @@ object PathScan {
       p1.totalCount + p2.totalCount
     )
   }
+
+  def taskFork[R: _Task, A](e: Eff[R, A]): Eff[R, A] =
+    interpret.interceptNat[R, Task, A](e)(
+      new (Task ~> Task) {
+        def apply[X](fa: Task[X]): Task[X] =
+          Task.fork(fa)
+      })
+
 }
 
 case class FileSize(path: File, size: Long)
