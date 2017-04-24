@@ -93,8 +93,7 @@ object PathScan {
       for {
         fs <- ask[R, Filesystem]
         topN <- PathScan.takeTopN
-        files <- catchNonFatalThrowable(fs.listFiles(dir))
-        childScans <- files.foldMapM(PathScan.scan[R](_))(Monad[Eff[R, ?]], topN)
+        childScans <- fs.listFiles(dir).foldMapM(PathScan.scan[R](_))(Monad[Eff[R, ?]], topN)
       } yield childScans
   }
 
@@ -117,8 +116,7 @@ object FileSize {
 
   def ofFile[R: _filesystem: _throwableEither](file: File): Eff[R, FileSize] = for {
     fs <- ask
-    size <- catchNonFatalThrowable(fs.length(file))
-  } yield FileSize(file, size)
+  } yield FileSize(file, fs.length(file))
 
   implicit val ordering: Ordering[FileSize] = Ordering.by[FileSize, Long  ](_.size).reverse
 }

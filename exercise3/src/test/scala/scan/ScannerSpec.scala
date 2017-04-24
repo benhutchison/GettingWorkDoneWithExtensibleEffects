@@ -42,7 +42,7 @@ class ScannerSpec extends mutable.Specification {
     val fs = MockFilesystem(Map.empty, Map.empty)
 
     val actual = Scanner.pathScan(base, 2, fs)
-    val expected = Left(new FileNotFoundException("base"))
+    val expected = ???
 
     //Cant directly compare 2 different FileNotFoundException instances for equality, so convert to Strings first
     actual.toString.mustEqual(expected.toString)
