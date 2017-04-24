@@ -131,7 +131,7 @@ object PathScan {
           val fileCount = files.count(_.isInstanceOf[File])
           tell(Log.debug(s"Scanning directory '$dir': $dirCount subdirectories and $fileCount files"))
         }
-        concurrentChildScans <- Eff.traverseA(files)(file => taskFork(taskSuspend(Task.eval(PathScan.scan[R](file)))))
+        concurrentChildScans <- Eff.traverseA(files)(file => taskSuspend(Task.eval(PathScan.scan[R](file))))
       }
       yield concurrentChildScans.combineAll(topN)
   }
@@ -147,13 +147,6 @@ object PathScan {
       p1.totalCount + p2.totalCount
     )
   }
-
-  def taskFork[R: _Task, A](e: Eff[R, A]): Eff[R, A] =
-    interpret.interceptNat[R, Task, A](e)(
-      new (Task ~> Task) {
-        def apply[X](fa: Task[X]): Task[X] =
-          Task.fork(fa)
-      })
 
 }
 

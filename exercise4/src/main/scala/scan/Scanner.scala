@@ -19,12 +19,13 @@ import org.atnos.eff.addon.monix.task._
 import org.atnos.eff.syntax.addon.monix.task._
 
 import monix.eval._
+import monix.execution._
 
 import EffTypes._
 
-import monix.execution.Scheduler.Implicits.global
-
 object Scanner {
+
+  implicit val s = Scheduler(ExecutionModel.BatchedExecution(32))
 
   type R = Fx.fx4[Reader[Filesystem, ?], Reader[ScanConfig, ?], Either[Throwable, ?], Task]
 
@@ -93,7 +94,7 @@ object PathScan {
 
   def empty: PathScan = PathScan(SortedSet.empty, 0, 0)
 
-  def scan[R: _filesystem: _config: _throwableEither: _Task](path: FilePath): Eff[R, PathScan] = path match {
+  def scan[R: _filesystem: _config: _throwableEither](path: FilePath): Eff[R, PathScan] = path match {
     case file: File =>
       for {
         fs <- FileSize.ofFile(file)
@@ -104,7 +105,7 @@ object PathScan {
         fs <- ask[R, Filesystem]
         topN <- PathScan.takeTopN
         files <- catchNonFatalThrowable(fs.listFiles(dir))
-        concurrentChildScans <- Eff.traverseA(files)(file => taskSuspend(Task.eval(PathScan.scan[R](file))))
+        concurrentChildScans <- files.traverse(PathScan.scan[R](_))
       }
       yield concurrentChildScans.combineAll(topN)
   }
@@ -121,13 +122,6 @@ object PathScan {
     )
   }
 
-  //Intercepts all Tasks within `e` and returns an Eff expression ensuring they `fork` into a thread switch when invoked
-  def taskFork[R: _Task, A](e: Eff[R, A]): Eff[R, A] =
-    interpret.interceptNat[R, Task, A](e)(
-      new (Task ~> Task) {
-        def apply[X](fa: Task[X]): Task[X] =
-          Task.fork(fa)
-      })
 }
 
 case class FileSize(path: File, size: Long)

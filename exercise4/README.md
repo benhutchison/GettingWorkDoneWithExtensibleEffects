@@ -60,28 +60,26 @@ together in the same thread, or if each task is individually executed by the thr
 3. Run the tests to verify your task based implementation still gives the correct output.
 
 
-4. Choose a directory tree cotaining over 1000 files, `run` your program, and take some timings. (See 6. below if you hit
-Stack Overflows)
+4. By default Monix batches the execution of a series of Tasks serially in the same thread to avoid thread context switches.
+The `BatchedExecution(32)` configuration in the Scanner specifies that 32 tasks should be executed by a thread before
+releasing control and returning to the configured Monix `Scheduler`.
 
+When tasks are structurally independent of each other, as is expressed by using `traverseA`, the batch size affects the
+degree of concurrency that will be enabled when the program executes. Too much, and a threads can context switch wastefully.
+(This is what happens with Scala `Future` and is the reason why Monix tasks typically run faster). Too little, and the available
+parallelism in the underlying work may not be achieved.
 
-5. The Monix default is to run a series Task serially in the same thread to avoid thread context switches. So the above code will *not
-actually be scanning directories in parallel*. To mark subtasks as eligible to run in another thread, they should be wrapped in
-a `Task.fork()` call.
+Monix defaults to a batch size 1024. For tasks which do IO such as the Scanner, this may be too high. The value 32 was
+derived experimentally running the program against large directory scans on a Macbook SSD drive.
 
-When the tasks are represented as Eff effects, it can be slightly tricky to fork them. The `PathScan.taskFork` method achieves
-this by *interception*: it transforms an Eff program into one where every Task is `fork`ed, when the program is interpreted.
+- Run the Scanner on a directory tree with 100s of files, big enough that it takes approx 10secs to complete.
+Try varying the batch size parameter, by doubling or halving it progressively.
+Take multiple timings at each batch size. Is 32 the optimal value on your hardware or something else?
 
-Modify the directory traversal case in `PathScan.scan`: try wrapping `PathScan.taskFork` around the invocation of `pathScan`
-on each child file (ie around `taskSuspend`).
+- Also, if you have a multicore machine, observe the CPU usage as you change the batch size. You may see it rise with
+a smaller batch size, even if overall performance worsens. This is because its doing more work in parallel but wasting
+effort on switching work between threads.
 
-Then re-run the same scan as in step 4. Did the timing improve, worsen or remain the same when forking? If you can, examine and
-contrast your CPU usage when using the forked vs non-forked versions?
-
-In the author's tests on a quad-core Mac, the single-threaded, non-forked version consistently runs 2-3x faster.
-So the naive conclusion that scanning directories in parallel would be faster doesn't seem true. The probable explanation
-is that listing single directory is pretty lightweight, and the overhead of synchronizing work across lots of different
-threads exceeds the cost of doing the work itself.
-
-
-6. Try running your program on a very large directory tree. What happens? You should be a StackOverflow error. This is due to an
-unfortunate limitation in Eff currently, where `traverseA` is not "stack safe".
+Remember that if you your the monadic `traverse`, rather than the applicative `traverseA`, the tasks will run serially
+(without parallelism) regardless of the batch size. This is because monadic traversal defines a sequential structure where each task
+logically depends upon the one before it.
