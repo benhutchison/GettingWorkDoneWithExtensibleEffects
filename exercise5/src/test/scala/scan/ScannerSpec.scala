@@ -29,7 +29,7 @@ class ScannerSpec extends mutable.Specification {
     val sub3 = File(s"${subdir.path}/3.txt")
     val fs = MockFilesystem(
       Map(
-        base -> List(subdir, base1, base2),
+        base -> List(base1, base2, subdir),
         subdir -> List(sub1, sub3)
       ),
       Map(base1 -> 1, base2 -> 2, sub1 -> 1, sub3 -> 3)

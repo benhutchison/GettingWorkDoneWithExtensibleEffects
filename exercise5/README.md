@@ -25,7 +25,7 @@ write unit tests around the log output.
 2. Run the tests. They now verify not just the program output but the logs. They should fail because they expect log output
 for each file visited by the scan.
 
-    - Make the test pass by adding the approrpiate `tell` statement to the `File` case in `PathScan.scan`.
+    - Make the test pass by adding the appropriate `tell` statement to the `File` case in `PathScan.scan`.
 
 
 # Exercise 5a: Flexible Interpretation
