@@ -38,11 +38,15 @@ compile errors in one project won't affect the others.
 While doing the workshop, run SBT in the base directory with the command `sbt` and then operate from the SBT prompt. Invoking each
 SBT command from the shell (eg `sbt exercise1/compile`) *will* be slower due to JVM startup costs.
 
+- To list all subprojects, use SBT command `projects`
+
 - To compile sources in subproject `exercise1`, use SBT command `exercise1/compile`
 
 - To run any unit tests in `src/test/scala/*` under subproject `exercise1`, use SBT command `exercise1/test`
 
 - To run the main method of subproject `exercise1`, use SBT command `exercise1/run <program arguments>`
+
+*SBT commands should be scoped to a subproject (eg `exercise1/test`). Running eg `test` at the top level will load 10 copies of the classes into the SBT JVM, potentially leading to `OutOfMemoryError: Metaspace`*
 
 ## Solutions
 
