@@ -9,7 +9,7 @@ The next version of the program will use a `Either[Throwable, PathScan]` type to
 
 ## Tasks
 
-1. Examine the changes in this version. Identify:
+### :mag: _Study Code_
 
 - The [set of Effects used at the top level of the program](https://github.com/benhutchison/GettingWorkDoneWithExtensibleEffects/blob/master/exercise3/src/main/scala/scan/Scanner.scala#L21)
 now includes a 3rd effect `Either[Throwable, ?]`. The `?` here in the type represents a payload type which will be filled in when
@@ -26,8 +26,9 @@ is forced to deal with the possiblity of error, because the interpretation resul
 
    Which leads to the next task, adding a Member for the error effect..
 
+### :pencil: _Write Code_
 
-2. The eff library [pre-defines a member typeclass](https://github.com/atnos-org/eff/blob/81fd2affeab65e9621cb4a6cba35d0539d201954/shared/src/main/scala/org/atnos/eff/EitherEffect.scala#L23)
+The eff library [pre-defines a member typeclass](https://github.com/atnos-org/eff/blob/81fd2affeab65e9621cb4a6cba35d0539d201954/shared/src/main/scala/org/atnos/eff/EitherEffect.scala#L23)
 for the `Either[Throwable, ?]` effect, and it is already available via `import org.atnos.eff.all._`.
 
     To ensure that exceptions thrown by calls to the `Filesystem` are caught and transformed into `Either` values, two changes are
@@ -37,12 +38,14 @@ for the `Either[Throwable, ?]` effect, and it is already available via `import o
   this method may use the `Either` effect.
 
   - Secondly, wrap the [`catchNonFatalThrowable`](https://github.com/atnos-org/eff/blob/81fd2affeab65e9621cb4a6cba35d0539d201954/shared/src/main/scala/org/atnos/eff/EitherEffect.scala#L46)
-  method around filesystem calls, and extract them into their own line in the for expression. This combinator yields whatever
-  it wraps as a payload, but thrown exceptions are caught and converted to a `Left[Throwable]`.
+  method around filesystem calls (ie `length` and `listFiles`). Extract them into their own line in the for expression.
+  This combinator yields whatever it wraps as a payload, but thrown exceptions are caught and converted to a `Left[Throwable]`.
 
+### :pencil: _Write Code_
 
-3. Examine the test code in `ScannerSpec` and note the new test for the error case. Work out what value you would expect
+Examine the test code in `ScannerSpec` and note the new test for the error case. Work out what value you would expect
 the scan to yield, when invoked on the mock filesystem provided, and replace the `???` to get the test working.
 
+### :arrow_forward: _Run Code_
 
-4. Run the tests to verify your changes are working correctly.
+Run both tests to verify both happy and sad paths.
