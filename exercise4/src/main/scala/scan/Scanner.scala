@@ -102,9 +102,9 @@ object PathScan {
       yield PathScan(SortedSet(fs), fs.size, 1)
     case dir: Directory =>
       for {
-        fs <- ask[R, Filesystem]
+        filesystem <- ask[R, Filesystem]
         topN <- PathScan.takeTopN
-        files <- catchNonFatalThrowable(fs.listFiles(dir))
+        files <- catchNonFatalThrowable(filesystem.listFiles(dir))
         concurrentChildScans <- files.traverse(PathScan.scan[R](_))
       }
       yield concurrentChildScans.combineAll(topN)

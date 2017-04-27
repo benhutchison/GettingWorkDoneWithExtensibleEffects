@@ -94,8 +94,8 @@ object PathScan {
         fs <- ask[R, Filesystem]
         topN <- PathScan.takeTopN
         files <- catchNonFatalThrowable(fs.listFiles(dir))
-        childScans <- files.foldMapM(PathScan.scan[R](_))(Monad[Eff[R, ?]], topN)
-      } yield childScans
+        childScans <- files.traverse(PathScan.scan[R](_))
+      } yield childScans.combineAll(topN)
   }
 
   def takeTopN[R: _config]: Eff[R, Monoid[PathScan]] = for {

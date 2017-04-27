@@ -26,22 +26,39 @@ object Scanner {
       val fs = FileSize.ofFile(path)
       PathScan(SortedSet(fs), fs.size, 1)
     case dir if Files.isDirectory(path) =>
-        Files.list(dir).toScala[Stream].foldMap(pathScan(_, topN))(PathScan.topNMonoid(topN))
+      val files = {
+        val jstream = Files.list(dir)
+        try jstream.toScala[List]
+        finally jstream.close()
+      }
+      files.map(pathScan(_, topN)).combineAll(PathScan.topNMonoid(topN))
     case _ =>
       PathScan.empty
   }
 
 }
 
-case class PathScan(largestFiles: SortedSet[FileSize], totalSize: Long, totalCount: Long)
+//Represents the results of recursively scanning some directory tree
+case class PathScan(
+  //Sorted set of the largest files found in the tree
+  largestFiles: SortedSet[FileSize],
+  //total bytes all files scanned in the tree
+  totalSize: Long,
+  //total number of files encountered in the tree
+  totalCount: Long
+)
 
 object PathScan {
 
   def empty = PathScan(SortedSet.empty, 0, 0)
 
+  //topNMonoid defines a Monoid operator that can combine different PathScans together to produce a summary PathScan
+  //It accepts a parameter `n` specifying how many of the largest files to keep track off
   def topNMonoid(n: Int): Monoid[PathScan] = new Monoid[PathScan] {
     def empty: PathScan = PathScan.empty
 
+    //The combine operation of a Monoid should yield a combined, summary PathScan based on the two inputs
+    //Only the largest `n` files should be included in the combined scan
     def combine(p1: PathScan, p2: PathScan): PathScan = ???
   }
 
@@ -55,7 +72,8 @@ object FileSize {
     FileSize(file, Files.size(file))
   }
 
-  implicit val ordering: Ordering[FileSize] = Ordering.by[FileSize, Long  ](_.size).reverse
+  //The implicit declares the default ordering of FileSize objects is by file size (in bytes)
+  implicit val ordering: Ordering[FileSize] = Ordering.by[FileSize, Long](_.size)
 
 }
 object ReportFormat {

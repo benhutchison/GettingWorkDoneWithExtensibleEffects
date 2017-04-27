@@ -91,10 +91,10 @@ object PathScan {
       yield PathScan(SortedSet(fs), fs.size, 1)
     case dir: Directory =>
       for {
-        fs <- ask[R, Filesystem]
+        filesystem <- ask[R, Filesystem]
         topN <- PathScan.takeTopN
-        childScans <- fs.listFiles(dir).foldMapM(PathScan.scan[R](_))(Monad[Eff[R, ?]], topN)
-      } yield childScans
+        childScans <- filesystem.listFiles(dir).traverse(PathScan.scan[R](_))
+      } yield childScans.combineAll(topN)
   }
 
   def takeTopN[R: _config]: Eff[R, Monoid[PathScan]] = for {

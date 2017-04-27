@@ -26,7 +26,12 @@ object Scanner {
       val fs = FileSize.ofFile(path)
       PathScan(SortedSet(fs), fs.size, 1)
     case dir if Files.isDirectory(path) =>
-        Files.list(dir).toScala[Stream].foldMap(pathScan(_, topN))(PathScan.topNMonoid(topN))
+      val files = {
+        val jstream = Files.list(dir)
+        try jstream.toScala[List]
+        finally jstream.close()
+      }
+      files.map(pathScan(_, topN)).combineAll(PathScan.topNMonoid(topN))
     case _ =>
       PathScan.empty
   }

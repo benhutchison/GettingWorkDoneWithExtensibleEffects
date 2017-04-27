@@ -123,9 +123,9 @@ object PathScan {
       yield PathScan(SortedSet(fs), fs.size, 1)
     case dir: Directory =>
       for {
-        fs <- ask[R, Filesystem]
+        filesystem <- ask[R, Filesystem]
         topN <- PathScan.takeTopN
-        files <- catchNonFatalThrowable(fs.listFiles(dir))
+        files <- catchNonFatalThrowable(filesystem.listFiles(dir))
         _ <- {
           val dirCount = files.count(_.isInstanceOf[Directory])
           val fileCount = files.count(_.isInstanceOf[File])

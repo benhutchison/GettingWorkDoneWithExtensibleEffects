@@ -18,7 +18,7 @@ class ScannerSpec extends mutable.Specification {
     val sub3 = deletedOnExit(fillFile(subdir, 3))
 
     val actual = Scanner.pathScan(base, 2)
-    val expected = ???
+    val expected = new PathScan(SortedSet(FileSize(sub3, 3), FileSize(base2, 2)), 7, 4)
 
     actual.mustEqual(expected)
   }
