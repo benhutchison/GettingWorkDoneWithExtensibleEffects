@@ -93,7 +93,7 @@ object PathScan {
 
   def empty: PathScan = PathScan(SortedSet.empty, 0, 0)
 
-  def scan[R: _filesystem: _config: _throwableEither: _Task](path: FilePath): Eff[R, PathScan] = path match {
+  def scan[R: _filesystem: _config: _throwableEither: _task](path: FilePath): Eff[R, PathScan] = path match {
     case file: File =>
       for {
         fs <- FileSize.ofFile(file)

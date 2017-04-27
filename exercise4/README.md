@@ -3,6 +3,8 @@
 The scanning of a directory tree can be done in parallel by processing each subdirectory in separate tasks. Tasks represent
 a chunk of work, and allow fine control over what threads run the task and with what level of concurrency.
 
+## The Monix Task Library
+
 In this exercise we will use [Monix Tasks](https://monix.io/docs/2x/eval/task.html) with Eff, and investigate running the
 scanner in parallel versus serially.
 
@@ -12,9 +14,9 @@ together in the same thread, or if each task is individually executed by the thr
 
 ## Tasks
 
-1. Study the example code, noting
+### :mag: _Study Code_
 
-   - The [effect stack `R`](https://github.com/benhutchison/GettingWorkDoneWithExtensibleEffects/blob/master/exercise4/src/main/scala/scan/Scanner.scala#L29)
+   - The [effect stack `R`](https://github.com/benhutchison/GettingWorkDoneWithExtensibleEffects/blob/master/exercise4/src/main/scala/scan/Scanner.scala#L30)
     now includes `Task` (from `import org.atnos.eff.addon.monix._`)
 
    - The interpretation of the stack has changed in *two* places. Firstly, the very final step of the interpretation chain
@@ -23,15 +25,19 @@ together in the same thread, or if each task is individually executed by the thr
    [main method](https://github.com/benhutchison/GettingWorkDoneWithExtensibleEffects/blob/master/exercise4/src/main/scala/scan/Scanner.scala#L31),
    using a monix method co-incidentally also named [`runAsync`](https://monix.io/docs/2x/eval/task.html#execution-runasync--foreach).
 
-   - Tasks will be run in the [default thread pool provided by Monix](https://github.com/benhutchison/GettingWorkDoneWithExtensibleEffects/blob/master/exercise4/src/main/scala/scan/Scanner.scala#L25)
-    which creates one thread per CPU (as reported to JVM by `Runtime.getRuntime().availableProcessors()`).
+   - Tasks will be run in the `Scheduler` placed in *implicit scope*. By default it
+    creates one thread per CPU (as reported to JVM by `Runtime.getRuntime().availableProcessors()`). `The Scheduler` parameter
+    `BatchedExecution(32)` tells monix to chunk together 32 Tasks in a row and run them on the same thread.
+    It's discussed in more detail in the last task below.
 
-   - It now reports some information about how many milliseconds the scan took.
+   - The scanner now reports some information about how many milliseconds the scan took.
 
 
-2. You will need to complete `PathScan.scan` to run subdirectory scans as Tasks, and indicate they are independent of each other.
+### :pencil: _Write Code_
 
-    - First add the `_Task` Member constraint, which comes from `import org.atnos.eff.addon.monix.task._`
+You will need to complete `PathScan.scan` to run subdirectory scans as Tasks, and indicate they are independent of each other.
+
+    - First add the `_task` Member constraint, which comes from `import org.atnos.eff.addon.monix.task._`
 
     - Each file or subdirectory listed in the directory can be scanned as a separate Task. The file tasks will quickly return,
     while the subdirectory tasks may themselves spawn more subtasks.
@@ -56,11 +62,14 @@ together in the same thread, or if each task is individually executed by the thr
        a computation that yields `List[PathScan]`. The final step is to run the `PathScan` monoid instance over the list
        to reduce it to one summary scan; `combineAll` does this.
 
+### :arrow_forward: _Run Code_
 
-3. Run the tests to verify your task based implementation still gives the correct output.
+Run the tests to verify your task based implementation still gives the correct output.
 
 
-4. By default Monix batches the execution of a series of Tasks serially in the same thread to avoid thread context switches.
+### :arrow_forward: :question: _Optional Run Code_
+
+By default Monix batches the execution of a series of Tasks serially in the same thread to avoid thread context switches.
 The `BatchedExecution(32)` configuration in the Scanner specifies that 32 tasks should be executed by a thread before
 releasing control and returning to the configured Monix `Scheduler`.
 
