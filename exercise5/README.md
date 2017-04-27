@@ -9,7 +9,7 @@ write unit tests around the log output.
 
 ## Tasks
 
-1. Study the example code, noting
+### :mag: _Study Code_
 
    - The [effect stack `R`] now includes `Writer[Log]`, where `Log` is a sealed hierarchy of Log events at different levels.
 
@@ -21,11 +21,18 @@ write unit tests around the log output.
 
    - The logs are passed up to the top level where they are `println`ed out.
 
+### :arrow_forward: _Run Code_
 
-2. Run the tests. They now verify not just the program output but the logs. They should fail because they expect log output
+Run the tests. They now verify not just the program output but the logs. They should fail because they expect log output
 for each file visited by the scan.
 
-    - Make the test pass by adding the appropriate `tell` statement to the `File` case in `PathScan.scan`.
+### :pencil: _Write Code_
+
+Make the test pass by adding the appropriate `tell` statement to the `File` case in `PathScan.scan`.
+
+### :arrow_forward: _Run Code_
+
+`run` the scanner on a real directory tree and check the logging works as expected.
 
 
 # Exercise 5a: Flexible Interpretation
@@ -38,7 +45,9 @@ often leaving interpretation to the last possible moment results in more flexibl
 
 ## Tasks
 
-1. One downside of the logging strategy used above is that all the logs are accumulated in memory until the end of the
+### :pencil: _Write Code_
+
+One downside of the logging strategy used above is that all the logs are accumulated in memory until the end of the
 computation. A big computation could emit alot of logs, and we might not wish to cache them to the end.
 
 Eff gives us options. One provided by `runWriterUnsafe` is to send a side-effecting handler function (eg `println`)
@@ -46,10 +55,14 @@ into the interpreter, that logs each event as its emitted, rather than returning
 
 Try changing `Scanner.pathScan` to use `runWriterUnsafe[Log](println)`.
 
-2. You'll observe that we are no longer returning our logs, so there are now compiler errors in `Scanner.scanReport` and
+### :pencil: _Write Code_
+
+You'll observe that we are no longer returning our logs, so there are now compiler errors in `Scanner.scanReport` and
 `Scanner.main`. Fix these so that the program compiles and runs again.
 
-3. Quite alot of code had to be touched just to change the logging strategy! Try to re-organize the code
+### :pencil: _Write Code_
+
+Quite alot of code had to be touched just to change the logging strategy! Try to re-organize the code
  so that changes to logging are more contained.
 
 In all the examples so far, we've done processing over the result of Eff interpretation. This had some benefits, like
