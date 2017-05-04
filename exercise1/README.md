@@ -1,6 +1,8 @@
 # Exercise 1: File Scanner without Eff
 
-This implementation uses regular Scala features to build a large file scanner:
+In all the exercises, we will look at variants of a File Scanner. The scanner finds and reports on the largest 10 files under a directory specified by the user, as well as collecting some stats about how many total files and total bytes are found.
+
+This first exercise uses regular Scala features without Eff: 
 
 - File system operations are done directly inline, primarily using the `java.nio.file.Files` API provided in Java 8. This
 is preferable to the operations offered through the older `java.io.File` API because error conditions are signalled by an
