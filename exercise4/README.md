@@ -37,30 +37,30 @@ together in the same thread, or if each task is individually executed by the thr
 
 You will need to complete `PathScan.scan` to run subdirectory scans as Tasks, and indicate they are independent of each other.
 
-    - First add the `_task` Member constraint, which comes from `import org.atnos.eff.addon.monix.task._`
+- First add the `_task` Member constraint, which comes from `import org.atnos.eff.addon.monix.task._`
 
-    - Each file or subdirectory listed in the directory can be scanned as a separate Task. The file tasks will quickly return,
-    while the subdirectory tasks may themselves spawn more subtasks.
+- Each file or subdirectory listed in the directory can be scanned as a separate Task. The file tasks will quickly return,
+while the subdirectory tasks may themselves spawn more subtasks.
 
-       To build an Eff expression yielding an `A` inside a task, use the
-    [`taskSuspend`](https://github.com/atnos-org/eff/blob/81fd2affeab65e9621cb4a6cba35d0539d201954/monix/shared/src/main/scala/org/atnos/eff/addon/monix/TaskEffect.scala#L26)
-    combinator. This combinator accepts a parameter of type `Task[Eff[R, A]]`, so the construction of the Eff subexpression
-    is deferred until needed. [`Task.eval`](https://monix.io/docs/2x/eval/task.html#taskeval-delay)
-    creates a Task that lazily evaluates its contents.
+   To build an Eff expression yielding an `A` inside a task, use the
+[`taskSuspend`](https://github.com/atnos-org/eff/blob/81fd2affeab65e9621cb4a6cba35d0539d201954/monix/shared/src/main/scala/org/atnos/eff/addon/monix/TaskEffect.scala#L26)
+combinator. This combinator accepts a parameter of type `Task[Eff[R, A]]`, so the construction of the Eff subexpression
+is deferred until needed. [`Task.eval`](https://monix.io/docs/2x/eval/task.html#taskeval-delay)
+creates a Task that lazily evaluates its contents.
 
-    - But this leaves the problem of how to convert a `List[File]` into a collection of `Task`s that can be run independently
-    (and potentially concurrent with each other).
-    Eff provides the *applicative-traversal* [`Eff.traverseA`](https://github.com/atnos-org/eff/blob/81fd2affeab65e9621cb4a6cba35d0539d201954/shared/src/main/scala/org/atnos/eff/Eff.scala#L276)
-    operator for this: feed it a list of files, and a function that converts each file
-    into a `Task`, and it will build an Eff computation that marks the subtasks as independent of each other.
+- But this leaves the problem of how to convert a `List[File]` into a collection of `Task`s that can be run independently
+(and potentially concurrent with each other).
+Eff provides the *applicative-traversal* [`Eff.traverseA`](https://github.com/atnos-org/eff/blob/81fd2affeab65e9621cb4a6cba35d0539d201954/shared/src/main/scala/org/atnos/eff/Eff.scala#L276)
+operator for this: feed it a list of files, and a function that converts each file
+into a `Task`, and it will build an Eff computation that marks the subtasks as independent of each other.
 
-       Recall that actual task execution happens
-       [when the task is run](https://github.com/benhutchison/GettingWorkDoneWithExtensibleEffects/blob/master/exercise4/src/main/scala/scan/Scanner.scala#L31),
-       *not* when the Eff expression is built.
+   Recall that actual task execution happens
+   [when the task is run](https://github.com/benhutchison/GettingWorkDoneWithExtensibleEffects/blob/master/exercise4/src/main/scala/scan/Scanner.scala#L31),
+   *not* when the Eff expression is built.
 
-    - If you correctly apply the above three operators (`Eff.traverseA`, `taskSuspend` and `Task.eval`), you should end up with
-       a computation that yields `List[PathScan]`. The final step is to run the `PathScan` monoid instance over the list
-       to reduce it to one summary scan; `combineAll` does this.
+- If you correctly apply the above three operators (`Eff.traverseA`, `taskSuspend` and `Task.eval`), you should end up with
+   a computation that yields `List[PathScan]`. The final step is to run the `PathScan` monoid instance over the list
+   to reduce it to one summary scan; `combineAll` does this.
 
 ### :arrow_forward: _Run Code_
 
