@@ -72,8 +72,8 @@ object FileSize {
     FileSize(file, Files.size(file))
   }
 
-  //The implicit declares the default ordering of FileSize objects is by file size (in bytes)
-  implicit val ordering: Ordering[FileSize] = Ordering.by[FileSize, Long](_.size)
+  //The implicit declares the default ordering of FileSize objects is by file size (in bytes) descending
+  implicit val ordering: Ordering[FileSize] = Ordering.by[FileSize, Long](_.size).reverse
 
 }
 object ReportFormat {
