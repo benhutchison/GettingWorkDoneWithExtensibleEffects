@@ -166,7 +166,7 @@ object FileSize {
     size <- catchNonFatalThrowable(fs.length(file))
   } yield FileSize(file, size)
 
-  implicit val ordering: Ordering[FileSize] = Ordering.by[FileSize, Long  ](_.size).reverse
+  implicit val ordering: Ordering[FileSize] = Ordering.by[FileSize, Long](_.size).reverse
 }
 
 object ReportFormat {
