@@ -103,3 +103,17 @@ in Haskell and followup refinement [Freer Monads, More Extensible Effects](http:
 - [The Eff monad, one monad to rule them all](https://www.youtube.com/watch?v=KGJLeHhsZBo) by Eff library creator Eric Torreborre
 
 - My own video [Getting Work Done with the Eff Monad in Scala](https://www.youtube.com/watch?v=LhGq4HlozV4)
+
+## Version History
+
+May 2017
+
+* Initial version for Lambdajam 2017, based on Eff 4.3.1, cats 0.9.0 and Monix 2.2.4. Includes 5 exercises introducing
+`Reader`, `Either`, `Task` and `Writer` effects.
+
+May 2018
+
+* Upgrade libraries to Eff 5.1, cats 1.1, sbt 1.1 and introduce Cats Effect library to use IO effect rather than Task.
+
+
+
