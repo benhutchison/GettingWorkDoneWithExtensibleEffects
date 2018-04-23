@@ -19,16 +19,19 @@ import org.atnos.eff.addon.monix.task._
 import org.atnos.eff.syntax.addon.monix.task._
 
 import monix.eval._
+import monix.execution._
+
+import scala.concurrent.duration._
 
 import EffTypes._
 
-import monix.execution.Scheduler.Implicits.global
-
 object Scanner {
+
+  implicit val s = Scheduler(ExecutionModel.BatchedExecution(32))
 
   type R = Fx.fx4[Reader[Filesystem, ?], Reader[ScanConfig, ?], Either[Throwable, ?], Task]
 
-  def main(args: Array[String]): Unit = scanReport(Directory(args(0)), 10).map(println).runAsync
+  def main(args: Array[String]): Unit = scanReport(Directory(args(0)), 10).map(println).cancelable.runSyncUnsafe(6.seconds)
 
   def scanReport(base: FilePath, topN: Int): Task[String] = for {
     start <- Task.eval(System.currentTimeMillis)
