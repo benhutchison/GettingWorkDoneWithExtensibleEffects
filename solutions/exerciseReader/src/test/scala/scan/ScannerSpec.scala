@@ -41,7 +41,7 @@ class ScannerSpec extends mutable.Specification {
         throw new FileNotFoundException(path)
   }
 
-  "Report Format" ! {
+  "file scan" ! {
     val base = Directory("base")
     val base1 = File(s"${base.path}/1.txt")
     val base2 = File(s"${base.path}/2.txt")

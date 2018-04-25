@@ -37,37 +37,58 @@ class ScannerSpec extends mutable.Specification {
         throw new FileNotFoundException(path)
   }
 
+  val base = Directory("base")
+  val base1 = File(s"${base.path}/1.txt")
+  val base2 = File(s"${base.path}/2.txt")
+  val subdir = Directory(s"${base.path}/subdir")
+  val sub1 = File(s"${subdir.path}/1.txt")
+  val sub3 = File(s"${subdir.path}/3.txt")
+  val directories = Map(
+    base -> List(subdir, base1, base2),
+    subdir -> List(sub1, sub3)
+  )
+  val fileSizes = Map(base1 -> 1L, base2 -> 2L, sub1 -> 1L, sub3 -> 3L)
+  val fs = MockFilesystem(directories, fileSizes)
+
   type R = Fx.fx3[Task, Reader[Filesystem, ?], Reader[ScanConfig, ?]]
 
-  "Report Format" ! {
-    val base = Directory("base")
-    val base1 = File(s"${base.path}/1.txt")
-    val base2 = File(s"${base.path}/2.txt")
-    val subdir = Directory(s"${base.path}/subdir")
-    val sub1 = File(s"${subdir.path}/1.txt")
-    val sub3 = File(s"${subdir.path}/3.txt")
-    val fs: Filesystem = MockFilesystem(
-      Map(
-        base -> List(subdir, base1, base2),
-        subdir -> List(sub1, sub3)
-      ),
-      Map(base1 -> 1, base2 -> 2, sub1 -> 1, sub3 -> 3)
-    )
+  def run[T](program: Eff[R, T], fs: Filesystem) =
+    program.runReader(ScanConfig(2)).runReader(fs).runAsync.attempt.runSyncUnsafe(3.seconds)
 
-    val actual = Scanner.pathScan[R](base).runReader(ScanConfig(2)).runReader(fs).taskAttempt.runAsync.runSyncUnsafe(3.seconds)
+  "file scan" ! {
+    val actual = run(Scanner.pathScan(base), fs)
     val expected = Right(new PathScan(SortedSet(FileSize(sub3, 3), FileSize(base2, 2)), 7, 4))
 
     actual.mustEqual(expected)
   }
 
-  "Error handling" ! {
-    val base = Directory("base")
-    val fs: Filesystem = MockFilesystem(Map.empty, Map.empty)
+  "Error from Filesystem" ! {
+    val emptyFs: Filesystem = MockFilesystem(directories, Map.empty)
 
-    val actual = Scanner.pathScan[R](base).runReader(ScanConfig(2)).runReader(fs).taskAttempt.runAsync.runSyncUnsafe(3.seconds)
+    val actual = run(Scanner.pathScan(base), emptyFs)
     val expected = Left(new IOException())
 
     //Cant directly compare 2 different FileNotFoundException instances for equality, so convert to Strings first
     actual.toString.mustEqual(expected.toString)
+  }
+
+  type E = Fx.fx3[Task, Reader[Filesystem, ?], Either[String, ?]]
+  def runE[T](program: Eff[E, T], fs: Filesystem) =
+    //there are two nested Either in the stack, one from Exceptions and one from errors raised by the program
+    //we convert to a common error type String then flatten
+    program.runReader(fs).runEither.runAsync.attempt.runSyncUnsafe(3.seconds).leftMap(_.toString).flatten
+
+  "Error - Report with non-numeric input" ! {
+    val actual = runE(Scanner.scanReport(Array("base", "not a number")), fs)
+    val expected = Left("Number of files must be numeric: not a number")
+
+    actual.mustEqual(expected)
+  }
+
+  "Error - Report with non-positive input" ! {
+    val actual = runE(Scanner.scanReport(Array("base", "-1")), fs)
+    val expected = Left("Invalid number of files -1")
+
+    actual.mustEqual(expected)
   }
 }
