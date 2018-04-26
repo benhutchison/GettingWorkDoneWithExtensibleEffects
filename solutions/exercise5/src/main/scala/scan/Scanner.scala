@@ -44,9 +44,11 @@ object Scanner {
     s <- pathScan(base, topN, DefaultFilesystem)
     (result, logs) = s
 
+    finish <- Task.eval(System.currentTimeMillis)
+
   } yield (result match {
     case Right(scan) => ReportFormat.largeFilesReport(scan, base.path) +
-      s"\nElapsed ${System.currentTimeMillis - start}ms"
+      s"\nElapsed ${finish - start}ms"
     case Left(ex) => s"Scan of '${base.path}' failed: $ex"
   }, logs)
 

@@ -45,6 +45,8 @@ lazy val solutionExerciseReader = (project in file("solutions/exerciseReader")).
 
 lazy val solutionExerciseError = (project in file("solutions/exerciseError")).settings(commonSettings)
 
+lazy val solutionExerciseWriter = (project in file("solutions/exerciseWriter")).settings(commonSettings)
+
 lazy val solutionExercise2 = (project in file("solutions/exercise2")).settings(commonSettings)
 
 lazy val solutionExercise2io = (project in file("solutions/exercise2io")).settings(commonSettings)
