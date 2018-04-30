@@ -30,21 +30,21 @@ import scala.concurrent.duration._
 object Scanner {
   val Usage = "Scanner <path> [number of largest files to track]"
 
-  type R = Fx.fx5[Task, Reader[Filesystem, ?], Either[String, ?], Writer[Log, ?], State[Set[FilePath], ?]]
+  type R = Fx.fx4[Task, FilesystemCmd, Either[String, ?], Writer[Log, ?]]
 
   implicit val s = Scheduler(ExecutionModel.BatchedExecution(32))
 
   def main(args: Array[String]): Unit = {
     val program = scanReport[R](args).map(println)
 
-    program.runReader(DefaultFilesystem: Filesystem).evalStateZero[Set[FilePath]].runEither.runWriterUnsafe[Log]{
+    program.runFilesystemCmds(DefaultFilesystem).runEither.runWriterUnsafe[Log]{
       case Error(msg) => System.err.println(msg)
       case Info(msg) => System.out.println(msg)
       case _ => ()
     }.runAsync.runSyncUnsafe(1.minute)
   }
 
-  def scanReport[R: _task: _filesystem: _err: _log: _sym](args: Array[String]): Eff[R, String] = for {
+  def scanReport[R: _task: _filesystem: _err: _log](args: Array[String]): Eff[R, String] = for {
     base <- optionEither(args.lift(0), s"Path to scan must be specified.\n$Usage")
 
     topN <- {
@@ -53,12 +53,11 @@ object Scanner {
     }
     topNValid <- if (topN < 0) left[R, String, Int](s"Invalid number of files $topN") else topN.pureEff[R]
 
-    fs <- ask
-
     start <- taskDelay(System.currentTimeMillis())
 
-    scan <- pathScan[Fx.prepend[Reader[ScanConfig, ?], R]](
-      fs.filePath(base)).runReader[ScanConfig](ScanConfig(topNValid))
+    base <- FilesystemCmd.filePath(base)
+
+    scan <- pathScan[Fx.prepend[Reader[ScanConfig, ?], R]](base).runReader[ScanConfig](ScanConfig(topNValid))
 
     finish <- taskDelay(System.currentTimeMillis())
 
@@ -66,7 +65,7 @@ object Scanner {
 
   } yield ReportFormat.largeFilesReport(scan, base.toString)
 
-  def pathScan[R: _task: _filesystem: _config: _log: _sym](path: FilePath): Eff[R, PathScan] = path match {
+  def pathScan[R: _task: _filesystem: _config: _log](path: FilePath): Eff[R, PathScan] = path match {
 
     case f: File =>
       for {
@@ -76,10 +75,9 @@ object Scanner {
 
     case dir: Directory =>
       for {
-        filesystem <- ask[R, Filesystem]
         topN <- takeTopN
-        fileList <- taskDelay(filesystem.listFiles(dir))
-        childScans <- fileList.traverse(pathScan(_))
+        fileList <- FilesystemCmd.listFiles(dir)
+        childScans <- fileList.traverse(pathScan[R](_))
         _ <- {
           val dirCount = fileList.count(_.isInstanceOf[Directory])
           val fileCount = fileList.count(_.isInstanceOf[File])
@@ -87,21 +85,8 @@ object Scanner {
         }
       } yield childScans.combineAll(topN)
 
-    case Symlink(_, to) =>
-      for {
-        linksVisited <- get
-        scan <- if (linksVisited.contains(to))
-            PathScan.empty.pureEff[R]
-          else
-            modifyS.using(_ + to) >> pathScan(to)
-      } yield scan
-
     case Other(_) =>
-      PathScan.empty.pureEff
-  }
-
-  def modifyS[R, S](implicit member: State[S, ?] |= R) = new {
-    def using(f: S => S) = modify[R, S](f)
+      PathScan.empty.pureEff[R]
   }
 
 
@@ -119,45 +104,76 @@ object Scanner {
 
 }
 
-trait Filesystem {
+sealed trait FilesystemCmd[+A]
 
-  def filePath(path: String): FilePath
+object FilesystemCmd {
 
-  def length(file: File): Long
+  implicit class EffFilesystemCmdOps[R, A](e: Eff[R, A]) {
 
-  def listFiles(directory: Directory): List[FilePath]
-
-}
-case object DefaultFilesystem extends Filesystem {
-
-  def filePath(pathStr: String): FilePath = {
-    val path = Paths.get(pathStr)
-    if (Files.isSymbolicLink(path))
-      Symlink(pathStr, filePath(Files.readSymbolicLink(path).toString))
-    else if (Files.isRegularFile(path))
-      File(path.toString)
-    else if (Files.isDirectory(path))
-      Directory(pathStr)
-    else
-      Other(pathStr)
+    def runFilesystemCmds[U](fs: Filesystem)(implicit m: Member.Aux[FilesystemCmd, R, U]): Eff[U, A] = fs.runFilesystemCmds(e)
   }
 
-  def length(file: File) = Files.size(Paths.get(file.path))
+  def filePath[R: _filesystem](path: String): Eff[R, FilePath] = Eff.send[FilesystemCmd, R, FilePath](MkFilePath(path))
 
-  def listFiles(directory: Directory) = {
+  def length[R: _filesystem](file: File): Eff[R, Long] = Eff.send[FilesystemCmd, R, Long](Length(file))
+
+  def listFiles[R: _filesystem](directory: Directory): Eff[R, List[FilePath]] = Eff.send[FilesystemCmd, R, List[FilePath]](ListFiles(directory))
+
+}
+
+case class MkFilePath(path: String) extends FilesystemCmd[FilePath]
+case class Length(file: File) extends FilesystemCmd[Long]
+case class ListFiles(directory: Directory) extends FilesystemCmd[List[FilePath]]
+
+trait Filesystem {
+
+  def runFilesystemCmds[R, A, U](effects: Eff[R, A])(implicit m: Member.Aux[FilesystemCmd, R, U]): Eff[U, A] = {
+
+    val sideEffect = new SideEffect[FilesystemCmd] {
+      def apply[X](fsc: FilesystemCmd[X]): X =
+        (fsc match {
+          case MkFilePath(path)  => filePath(path)
+
+          case Length(file) =>  length(file)
+
+          case ListFiles(directory) => listFiles(directory)
+        })  .asInstanceOf[X]
+
+      def applicative[X, Tr[_] : Traverse](ms: Tr[FilesystemCmd[X]]): Tr[X] =
+        ms.map(apply)
+    }
+    Interpret.interpretUnsafe(effects)(sideEffect)(m)
+  }
+
+  protected def filePath(path: String): FilePath
+
+  protected def length(file: File): Long
+
+  protected def listFiles(directory: Directory): List[FilePath]
+
+}
+object DefaultFilesystem extends Filesystem {
+
+  protected def filePath(path: String): FilePath =
+    if (Files.isRegularFile(Paths.get(path)))
+      File(path.toString)
+    else if (Files.isDirectory(Paths.get(path)))
+      Directory(path)
+    else
+      Other(path)
+
+  protected def length(file: File): Long = Files.size(Paths.get(file.path))
+
+  protected def listFiles(directory: Directory) = {
     val files = Files.list(Paths.get(directory.path))
-    try files.toScala[List].flatMap(path => listFilePath(path.toString))
+    try files.toScala[List].flatMap(path => filePath(path.toString) match {
+      case Directory(path) => List(Directory(path))
+      case File(path) => List(File(path))
+      case Other(path) => List.empty
+    })
     finally files.close()
   }
 
-  private def listFilePath(path: String): List[FilePath] = {
-    filePath(path) match {
-      case Directory(path) => List(Directory(path))
-      case File(path) => List(File(path))
-      case Symlink(path, to) => listFilePath(to.path)
-      case Other(path) => List.empty
-    }
-  }
 }
 
 case class ScanConfig(topN: Int)
@@ -184,9 +200,7 @@ case class FileSize(file: File, size: Long)
 
 object FileSize {
 
-  def ofFile[R: _filesystem](file: File): Eff[R, FileSize] = for {
-    fs <- ask
-  } yield  FileSize(file, fs.length(file))
+  def ofFile[R: _filesystem](file: File): Eff[R, FileSize] = FilesystemCmd.length(file).map(FileSize(file, _))
 
   implicit val ordering: Ordering[FileSize] = Ordering.by[FileSize, Long](_.size).reverse
 
@@ -194,11 +208,10 @@ object FileSize {
 
 object EffTypes {
 
-  type _filesystem[R] = Reader[Filesystem, ?] <= R
+  type _filesystem[R] = FilesystemCmd |= R
   type _config[R] = Reader[ScanConfig, ?] <= R
   type _err[R] = Either[String, ?] <= R
   type _log[R] = Writer[Log, ?] <= R
-  type _sym[R] = State[Set[FilePath], ?] <= R
 }
 
 sealed trait Log {def msg: String}
@@ -220,7 +233,6 @@ sealed trait FilePath {
 
 case class File(path: String) extends FilePath
 case class Directory(path: String) extends FilePath
-case class Symlink(path: String, linkTo: FilePath) extends FilePath
 case class Other(path: String) extends FilePath
 
 //Common pure code that is unaffected by the migration to Eff

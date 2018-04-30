@@ -8,12 +8,14 @@ val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0",
     "org.typelevel" %% "cats-core" % "1.1.0",
-    "org.typelevel" %% "mouse" % "0.16",
-    "io.monix" %% "monix-eval" % "2.3.3",
-    "io.monix" %% "monix-cats" % "2.3.3",
-    "org.atnos" %% "eff" % "5.1.0-20180423013334-197fcd1",
-    "org.atnos" %% "eff-monix" % "5.1.0-20180423013334-197fcd1",
-    "org.atnos" %% "eff-cats-effect" % "5.1.0-20180423013334-197fcd1",
+    "org.typelevel" %% "mouse" % "0.17",
+    "io.monix" %% "monix-eval" % "3.0.0-RC1",
+    "org.atnos" %% "eff" % "5.2.0",
+    "org.atnos" %% "eff-monix" % "5.2.0",
+    "org.atnos" %% "eff-cats-effect" % "5.2.0",
+    "com.github.julien-truffaut"  %%  "monocle-core"    % "1.5.1-cats",
+    "com.github.julien-truffaut"  %%  "monocle-generic" % "1.5.1-cats",
+    "com.github.julien-truffaut"  %%  "monocle-macro"   % "1.5.1-cats",
     "org.specs2" %% "specs2-core" % "4.0.3" % "test"
   ),
   // to write types like Reader[String, ?]
@@ -48,6 +50,10 @@ lazy val solutionExerciseError = (project in file("solutions/exerciseError")).se
 lazy val solutionExerciseWriter = (project in file("solutions/exerciseWriter")).settings(commonSettings)
 
 lazy val solutionExerciseState = (project in file("solutions/exerciseState")).settings(commonSettings)
+
+lazy val solutionExerciseOptics = (project in file("solutions/exerciseOptics")).settings(commonSettings)
+
+lazy val solutionExerciseCustom = (project in file("solutions/exerciseCustom")).settings(commonSettings)
 
 lazy val solutionExercise2 = (project in file("solutions/exercise2")).settings(commonSettings)
 

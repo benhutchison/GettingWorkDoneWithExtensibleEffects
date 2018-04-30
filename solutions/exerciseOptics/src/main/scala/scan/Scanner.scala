@@ -3,110 +3,63 @@ package scan
 import java.nio.file._
 
 import scala.compat.java8.StreamConverters._
-import scala.collection.SortedSet
-
+import scala.collection._
 import cats._
 import cats.data._
 import cats.implicits._
-
-import mouse.all._
-
 import org.atnos.eff._
 import org.atnos.eff.all._
 import org.atnos.eff.syntax.all._
-
 import org.atnos.eff.addon.monix._
 import org.atnos.eff.addon.monix.task._
 import org.atnos.eff.syntax.addon.monix.task._
-
 import monix.eval._
 import monix.execution._
-
-import EffTypes._
+import monocle._
+import monocle.macros._
 
 import scala.concurrent.duration._
 
+import EffTypes._
+import EffOptics._
+
 
 object Scanner {
-  val Usage = "Scanner <path> [number of largest files to track]"
 
-  type R = Fx.fx5[Task, Reader[Filesystem, ?], Either[String, ?], Writer[Log, ?], State[Set[FilePath], ?]]
+  type R = Fx.fx2[Task, Reader[AppConfig, ?]]
 
   implicit val s = Scheduler(ExecutionModel.BatchedExecution(32))
 
   def main(args: Array[String]): Unit = {
-    val program = scanReport[R](args).map(println)
+    val program = scanReport[R](args(0)).map(println)
 
-    program.runReader(DefaultFilesystem: Filesystem).evalStateZero[Set[FilePath]].runEither.runWriterUnsafe[Log]{
-      case Error(msg) => System.err.println(msg)
-      case Info(msg) => System.out.println(msg)
-      case _ => ()
-    }.runAsync.runSyncUnsafe(1.minute)
+    program.runReader(AppConfig(ScanConfig(10), DefaultFilesystem)).runAsync.runSyncUnsafe(1.minute)
   }
 
-  def scanReport[R: _task: _filesystem: _err: _log: _sym](args: Array[String]): Eff[R, String] = for {
-    base <- optionEither(args.lift(0), s"Path to scan must be specified.\n$Usage")
-
-    topN <- {
-      val n = args.lift(1).getOrElse("10")
-      fromEither(n.parseInt.leftMap(_ => s"Number of files must be numeric: $n"))
-    }
-    topNValid <- if (topN < 0) left[R, String, Int](s"Invalid number of files $topN") else topN.pureEff[R]
-
-    fs <- ask
-
-    start <- taskDelay(System.currentTimeMillis())
-
-    scan <- pathScan[Fx.prepend[Reader[ScanConfig, ?], R]](
-      fs.filePath(base)).runReader[ScanConfig](ScanConfig(topNValid))
-
-    finish <- taskDelay(System.currentTimeMillis())
-
-    _ <- tell(Log.info(s"Scan of $base completed in ${finish - start}ms"))
-
+  def scanReport[R: _task: _appconfig](base: String): Eff[R, String] = for {
+    fs <- ask[R, Filesystem]
+    scan <- pathScan(fs.filePath(base))
   } yield ReportFormat.largeFilesReport(scan, base.toString)
 
-  def pathScan[R: _task: _filesystem: _config: _log: _sym](path: FilePath): Eff[R, PathScan] = path match {
 
+  def pathScan[R: _task: _appconfig](path: FilePath): Eff[R, PathScan] = path match {
     case f: File =>
       for {
-        fs <- FileSize.ofFile(f)
-        _ <- tell(Log.debug(s"File ${fs.file.path} Size ${ReportFormat.formatByteString(fs.size)}"))
+        fs <- FileSize.ofFile[R](f)
       } yield PathScan(SortedSet(fs), fs.size, 1)
-
     case dir: Directory =>
       for {
         filesystem <- ask[R, Filesystem]
-        topN <- takeTopN
-        fileList <- taskDelay(filesystem.listFiles(dir))
-        childScans <- fileList.traverse(pathScan(_))
-        _ <- {
-          val dirCount = fileList.count(_.isInstanceOf[Directory])
-          val fileCount = fileList.count(_.isInstanceOf[File])
-          tell(Log.debug(s"Scanning directory '$dir': $dirCount subdirectories and $fileCount files"))
-        }
+        topN <- takeTopN[R]
+        childScans <- filesystem.listFiles(dir).traverse(pathScan(_))
       } yield childScans.combineAll(topN)
-
-    case Symlink(_, to) =>
-      for {
-        linksVisited <- get
-        scan <- if (linksVisited.contains(to))
-            PathScan.empty.pureEff[R]
-          else
-            modifyS.using(_ + to) >> pathScan(to)
-      } yield scan
-
     case Other(_) =>
-      PathScan.empty.pureEff
-  }
-
-  def modifyS[R, S](implicit member: State[S, ?] |= R) = new {
-    def using(f: S => S) = modify[R, S](f)
+      PathScan.empty.pureEff[R]
   }
 
 
   def takeTopN[R: _config]: Eff[R, Monoid[PathScan]] = for {
-    scanConfig <- ask
+    scanConfig <- ask[R, ScanConfig]
   } yield new Monoid[PathScan] {
     def empty: PathScan = PathScan.empty
 
@@ -116,6 +69,15 @@ object Scanner {
       p1.totalCount + p2.totalCount
     )
   }
+}
+
+object EffOptics {
+
+  // "If I have a Reader of S effect, and a Lens from S to T, then I have a Reader of T effect"
+  implicit def readerLens[R, S, T](implicit m: MemberIn[Reader[S, ?], R], l: Lens[S, T]): MemberIn[Reader[T, ?], R] =
+    m.transform(new (Reader[T, ?] ~> Reader[S, ?]) {
+      def apply[X](f: Reader[T, X]) = Reader[S, X](s => f(l.get(s)))
+    })
 
 }
 
@@ -130,34 +92,33 @@ trait Filesystem {
 }
 case object DefaultFilesystem extends Filesystem {
 
-  def filePath(pathStr: String): FilePath = {
-    val path = Paths.get(pathStr)
-    if (Files.isSymbolicLink(path))
-      Symlink(pathStr, filePath(Files.readSymbolicLink(path).toString))
-    else if (Files.isRegularFile(path))
+  def filePath(path: String): FilePath =
+    if (Files.isRegularFile(Paths.get(path)))
       File(path.toString)
-    else if (Files.isDirectory(path))
-      Directory(pathStr)
+    else if (Files.isDirectory(Paths.get(path)))
+      Directory(path)
     else
-      Other(pathStr)
-  }
+      Other(path)
 
   def length(file: File) = Files.size(Paths.get(file.path))
 
   def listFiles(directory: Directory) = {
     val files = Files.list(Paths.get(directory.path))
-    try files.toScala[List].flatMap(path => listFilePath(path.toString))
+    try files.toScala[List].flatMap(path => filePath(path.toString) match {
+      case Directory(path) => List(Directory(path))
+      case File(path) => List(File(path))
+      case Other(path) => List.empty
+    })
     finally files.close()
   }
 
-  private def listFilePath(path: String): List[FilePath] = {
-    filePath(path) match {
-      case Directory(path) => List(Directory(path))
-      case File(path) => List(File(path))
-      case Symlink(path, to) => listFilePath(to.path)
-      case Other(path) => List.empty
-    }
-  }
+}
+
+case class AppConfig(scanConfig: ScanConfig, filesystem: Filesystem)
+object AppConfig {
+
+  implicit val _scanConfig: Lens[AppConfig, ScanConfig] = GenLens[AppConfig](_.scanConfig)
+  implicit val _filesystem: Lens[AppConfig, Filesystem] = GenLens[AppConfig](_.filesystem)
 }
 
 case class ScanConfig(topN: Int)
@@ -185,7 +146,7 @@ case class FileSize(file: File, size: Long)
 object FileSize {
 
   def ofFile[R: _filesystem](file: File): Eff[R, FileSize] = for {
-    fs <- ask
+    fs <- ask[R, Filesystem]
   } yield  FileSize(file, fs.length(file))
 
   implicit val ordering: Ordering[FileSize] = Ordering.by[FileSize, Long](_.size).reverse
@@ -194,22 +155,11 @@ object FileSize {
 
 object EffTypes {
 
-  type _filesystem[R] = Reader[Filesystem, ?] <= R
-  type _config[R] = Reader[ScanConfig, ?] <= R
-  type _err[R] = Either[String, ?] <= R
-  type _log[R] = Writer[Log, ?] <= R
-  type _sym[R] = State[Set[FilePath], ?] <= R
+  type _appconfig[R] = Reader[AppConfig, ?] |= R
+  type _filesystem[R] = Reader[Filesystem, ?] |= R
+  type _config[R] = Reader[ScanConfig, ?] |= R
 }
 
-sealed trait Log {def msg: String}
-object Log {
-  def error: String => Log = Error(_)
-  def info: String => Log = Info(_)
-  def debug: String => Log = Debug(_)
-}
-case class Error(msg: String) extends Log
-case class Info(msg: String) extends Log
-case class Debug(msg: String) extends Log
 
 //I prefer an closed set of disjoint cases over a series of isX(): Boolean tests, as provided by the Java API
 //The problem with boolean test methods is they make it unclear what the complete set of possible states is, and which tests
@@ -220,7 +170,6 @@ sealed trait FilePath {
 
 case class File(path: String) extends FilePath
 case class Directory(path: String) extends FilePath
-case class Symlink(path: String, linkTo: FilePath) extends FilePath
 case class Other(path: String) extends FilePath
 
 //Common pure code that is unaffected by the migration to Eff
