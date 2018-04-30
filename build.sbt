@@ -27,17 +27,27 @@ val commonSettings = Seq(
   scalacOptions in Test += "-Yrangepos"
 )
 
-lazy val exercise1 = (project in file("exercise1")).settings(commonSettings)
 
-lazy val exercise2 = (project in file("exercise2")).settings(commonSettings)
 
-lazy val exercise3 = (project in file("exercise3")).settings(commonSettings)
+lazy val exerciseClassic = (project in file("exerciseClassic")).settings(commonSettings)
 
-lazy val exercise4 = (project in file("exercise4")).settings(commonSettings)
+lazy val exerciseTask = (project in file("exerciseTask")).settings(commonSettings)
 
-lazy val exercise5 = (project in file("exercise5")).settings(commonSettings)
+lazy val exerciseReader = (project in file("exerciseReader")).settings(commonSettings)
 
-lazy val solutionExercise1 = (project in file("solutions/exercise1")).settings(commonSettings)
+lazy val exerciseError = (project in file("exerciseError")).settings(commonSettings)
+
+lazy val exerciseWriter = (project in file("exerciseWriter")).settings(commonSettings)
+
+lazy val exerciseConcurrent = (project in file("exerciseConcurrent")).settings(commonSettings)
+
+lazy val exerciseState = (project in file("exerciseState")).settings(commonSettings)
+
+lazy val exerciseOptics = (project in file("exerciseOptics")).settings(commonSettings)
+
+lazy val exerciseCustom = (project in file("exerciseCustom")).settings(commonSettings)
+
+
 
 lazy val solutionExerciseClassic = (project in file("solutions/exerciseClassic")).settings(commonSettings)
 
@@ -57,6 +67,19 @@ lazy val solutionExerciseOptics = (project in file("solutions/exerciseOptics")).
 
 lazy val solutionExerciseCustom = (project in file("solutions/exerciseCustom")).settings(commonSettings)
 
+
+lazy val exercise1 = (project in file("exercise1")).settings(commonSettings)
+
+lazy val exercise2 = (project in file("exercise2")).settings(commonSettings)
+
+lazy val exercise3 = (project in file("exercise3")).settings(commonSettings)
+
+lazy val exercise4 = (project in file("exercise4")).settings(commonSettings)
+
+lazy val exercise5 = (project in file("exercise5")).settings(commonSettings)
+
+lazy val solutionExercise1 = (project in file("solutions/exercise1")).settings(commonSettings)
+
 lazy val solutionExercise2 = (project in file("solutions/exercise2")).settings(commonSettings)
 
 lazy val solutionExercise2io = (project in file("solutions/exercise2io")).settings(commonSettings)
@@ -69,10 +92,14 @@ lazy val solutionExercise5 = (project in file("solutions/exercise5")).settings(c
 
 val testSolutions = TaskKey[Unit]("testSolutions", "Run all solution tests")
 testSolutions := Seq(
-  solutionExercise1 / Test / test,
-  solutionExercise2 / Test / test,
-  solutionExercise3 / Test / test,
-  solutionExercise4 / Test / test,
-  solutionExercise5 / Test / test,
+  solutionExerciseClassic / Test / test,
+  solutionExerciseTask / Test / test,
+  solutionExerciseReader / Test / test,
+  solutionExerciseError / Test / test,
+  solutionExerciseWriter / Test / test,
+  solutionExerciseState / Test / test,
+  solutionExerciseConcurrent / Test / test,
+  solutionExerciseOptics / Test / test,
+  solutionExerciseCustom / Test / test,
 ).dependOn.value
 
