@@ -1,4 +1,4 @@
-# Exercise 1: File Scanner without Eff
+# Classic File Scanner without Eff
 
 In all the exercises, we will look at variants of a File Scanner. The scanner finds and reports on the largest 10 files
 under a directory specified by the user, as well as collecting some stats about how many total files and total bytes are found.
