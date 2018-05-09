@@ -45,12 +45,14 @@ object Scanner {
   def pathScan[R: _task: _filesystem: _config](path: FilePath): Eff[R, PathScan] = path match {
     case f: File =>
       for {
-        fs <- FileSize.ofFile(f)
-      } yield PathScan(SortedSet(fs), fs.size, 1)
+        fs <- ask[R, Filesystem]
+        filesize = FileSize.ofFile(f, fs)
+      } yield PathScan(SortedSet(filesize), filesize.size, 1)
     case dir: Directory =>
       for {
+        config <- ask[R, ScanConfig]
+        topN = takeTopN(config)
         filesystem <- ask[R, Filesystem]
-        topN <- takeTopN
         childScans <- filesystem.listFiles(dir).traverse(pathScan[R](_))
       } yield childScans.combineAll(topN)
     case Other(_) =>
@@ -58,17 +60,16 @@ object Scanner {
   }
 
 
-  def takeTopN[R: _config]: Eff[R, Monoid[PathScan]] = for {
-    scanConfig <- ask
-  } yield new Monoid[PathScan] {
-    def empty: PathScan = PathScan.empty
+  def takeTopN(config: ScanConfig): Monoid[PathScan] =
+    new Monoid[PathScan] {
+      def empty: PathScan = PathScan.empty
 
-    def combine(p1: PathScan, p2: PathScan): PathScan = PathScan(
-      p1.largestFiles.union(p2.largestFiles).take(scanConfig.topN),
-      p1.totalSize + p2.totalSize,
-      p1.totalCount + p2.totalCount
-    )
-  }
+      def combine(p1: PathScan, p2: PathScan): PathScan = PathScan(
+        p1.largestFiles.union(p2.largestFiles).take(config.topN),
+        p1.totalSize + p2.totalSize,
+        p1.totalCount + p2.totalCount
+      )
+    }
 
 }
 
@@ -129,9 +130,7 @@ case class FileSize(file: File, size: Long)
 
 object FileSize {
 
-  def ofFile[R: _filesystem](file: File): Eff[R, FileSize] = for {
-    fs <- ask
-  } yield  FileSize(file, fs.length(file))
+  def ofFile(file: File, fs: Filesystem) = FileSize(file, fs.length(file))
 
   implicit val ordering: Ordering[FileSize] = Ordering.by[FileSize, Long](_.size).reverse
 
