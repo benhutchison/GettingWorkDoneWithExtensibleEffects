@@ -55,14 +55,8 @@ object Scanner {
 
     fs <- ask[R, Filesystem]
 
-    start <- taskDelay(System.currentTimeMillis())
-
     scan <- pathScan[Fx.prepend[Reader[ScanConfig, ?], R]](
       fs.filePath(base)).runReader[ScanConfig](ScanConfig(topNValid))
-
-    finish <- taskDelay(System.currentTimeMillis())
-
-    _ <- tell(Log.info(s"Scan of $base completed in ${finish - start}ms"))
 
   } yield ReportFormat.largeFilesReport(scan, base.toString)
 

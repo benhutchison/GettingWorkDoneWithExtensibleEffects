@@ -22,9 +22,6 @@ write unit tests around the log output.
    into the interpreter, that logs each event as its emitted, rather than returning an accumulation. Its not pure, but it
    has the advantage of not accumulating data in memory during execution.
 
-   - This example also measures the time the scan took. Note how the start and end times in `scanReport` must be wrapped in
-   `taskDelay` to ensure the clock times are taken when the program *runs*, and not when its is *created*.
-
 ### :arrow_forward: _Run Code_
 
 Run the tests. They now verify not just the program output but the logs. They should fail because they expect log output
@@ -40,9 +37,11 @@ Make the test pass by adding the appropriate `tell` statement to the `File` case
 
 ### :pencil: _Write Code_
 
-Try changing the interpretation in main to use the plain `runWriter`.
+- Measure the time the overall scan took. Take start and end times in `scanReport`, and use a `tell` to log the elapsed
+millis. Ensure your calls to the clock are wrapped in `taskDelay` effects to ensure the clock timings are taken when the program *runs*, and not when its is *created*.
 
-What does the program return now? How can you print the logs?
+- Try changing the interpretation in main to use the plain `runWriter`. What does the program return now? How can you
+print the logs?
 
 
 
