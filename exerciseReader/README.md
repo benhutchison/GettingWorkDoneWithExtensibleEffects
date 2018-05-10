@@ -24,6 +24,11 @@ Eff framework.
 In fact, the scanner depends upon two external dependencies; not the filesystem but also *topN*, the number of largest files
 to report on. So two distinct reader "effects" are combined.
 
+## Using Eff to stack Reader and Task effects
+
+We'll need to modify the Task-based version of the program to also support these new Reader effect. Eff lets us stack multiple effects
+in a single monad type.
+
 ## Tasks
 
 ### :mag: _Study Code_  Declaring Effects

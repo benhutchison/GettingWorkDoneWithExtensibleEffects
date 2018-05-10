@@ -35,9 +35,12 @@ object Scanner {
   implicit val s = Scheduler(ExecutionModel.BatchedExecution(32))
 
   def main(args: Array[String]): Unit = {
-    val program = scanReport[R](args).map(println)
+    val program = scanReport[R](args)
     
-    program.runReader(DefaultFilesystem: Filesystem).runEither.runAsync.runSyncUnsafe(1.minute)
+    program.runReader(DefaultFilesystem: Filesystem).runEither.runAsync.runSyncUnsafe(1.minute) match {
+      case Right(report) => println(report)
+      case Left(msg) => println(s"Scan failed: $msg")
+    }
   }
 
   def scanReport[R: _task: _filesystem: _err](args: Array[String]): Eff[R, String] = for {
@@ -47,12 +50,12 @@ object Scanner {
       val n = args.lift(1).getOrElse("10")
       fromEither(n.parseInt.leftMap(_ => s"Number of files must be numeric: $n"))
     }
-    topNValid <- if (topN < 0) left[R, String, Int](s"Invalid number of files $topN") else topN.pureEff[R]
+    topNValid <- ???
 
     fs <- ask[R, Filesystem]
 
-    scan <- pathScan[Fx.prepend[Reader[ScanConfig, ?], R]](
-      fs.filePath(base)).runReader[ScanConfig](ScanConfig(topNValid))
+    scan <- pathScan[Fx.prepend[Reader[ScanConfig, ?], R]](fs.filePath(base)).
+      runReader[ScanConfig](ScanConfig(topNValid))
 
   } yield ReportFormat.largeFilesReport(scan, base.toString)
 
@@ -127,16 +130,6 @@ case class PathScan(largestFiles: SortedSet[FileSize], totalSize: Long, totalCou
 object PathScan {
 
   def empty = PathScan(SortedSet.empty, 0, 0)
-
-  def topNMonoid(n: Int): Monoid[PathScan] = new Monoid[PathScan] {
-    def empty: PathScan = PathScan.empty
-
-    def combine(p1: PathScan, p2: PathScan): PathScan = PathScan(
-      p1.largestFiles.union(p2.largestFiles).take(n),
-      p1.totalSize + p2.totalSize,
-      p1.totalCount + p2.totalCount
-    )
-  }
 
 }
 

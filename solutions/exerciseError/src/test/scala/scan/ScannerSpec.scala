@@ -65,11 +65,10 @@ class ScannerSpec extends mutable.Specification {
   "Error from Filesystem" ! {
     val emptyFs: Filesystem = MockFilesystem(directories, Map.empty)
 
-    val actual = run(Scanner.pathScan(base), emptyFs)
-    val expected = Left(new IOException())
+    val actual = runE(Scanner.scanReport(Array("base", "10")), emptyFs)
+    val expected =  Left(new IOException().toString)
 
-    //Cant directly compare 2 different FileNotFoundException instances for equality, so convert to Strings first
-    actual.toString.mustEqual(expected.toString)
+    actual.mustEqual(expected)
   }
 
   type E = Fx.fx3[Task, Reader[Filesystem, ?], Either[String, ?]]

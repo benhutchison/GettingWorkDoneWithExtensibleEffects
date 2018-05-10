@@ -37,7 +37,7 @@ object Scanner {
   def main(args: Array[String]): Unit = {
     val program = scanReport[R](args).map(println)
     
-    program.runReader(DefaultFilesystem: Filesystem).runEither.runAsync.runSyncUnsafe(1.minute)
+    program.runReader(DefaultFilesystem: Filesystem).runEither.runAsync.attempt.runSyncUnsafe(1.minute).leftMap(_.toString).flatten
   }
 
   def scanReport[R: _task: _filesystem: _err](args: Array[String]): Eff[R, String] = for {
@@ -127,16 +127,6 @@ case class PathScan(largestFiles: SortedSet[FileSize], totalSize: Long, totalCou
 object PathScan {
 
   def empty = PathScan(SortedSet.empty, 0, 0)
-
-  def topNMonoid(n: Int): Monoid[PathScan] = new Monoid[PathScan] {
-    def empty: PathScan = PathScan.empty
-
-    def combine(p1: PathScan, p2: PathScan): PathScan = PathScan(
-      p1.largestFiles.union(p2.largestFiles).take(n),
-      p1.totalSize + p2.totalSize,
-      p1.totalCount + p2.totalCount
-    )
-  }
 
 }
 
