@@ -93,17 +93,12 @@ object Scanner {
         scan <- if (linksVisited.contains(to))
             PathScan.empty.pureEff[R]
           else
-            modifyS.using(_ + to) >> pathScan(to)
+            modify((set: Set[FilePath]) => set + to) >> pathScan(to)
       } yield scan
 
     case Other(_) =>
       PathScan.empty.pureEff
   }
-
-  def modifyS[R, S](implicit member: State[S, ?] |= R) = new {
-    def using(f: S => S) = modify[R, S](f)
-  }
-
 
   def takeTopN[R: _config]: Eff[R, Monoid[PathScan]] = for {
     scanConfig <- ask

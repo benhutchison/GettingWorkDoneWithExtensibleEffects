@@ -44,7 +44,7 @@ object Scanner {
     }.runAsync.runSyncUnsafe(1.minute)
   }
 
-  def scanReport[R: _task: _filesystem: _err: _log: _sym](args: Array[String]): Eff[R, String] = for {
+  def scanReport[R: _task: _filesystem: _err: _log](args: Array[String]): Eff[R, String] = for {
     base <- optionEither(args.lift(0), s"Path to scan must be specified.\n$Usage")
 
     topN <- {
@@ -66,7 +66,7 @@ object Scanner {
 
   } yield ReportFormat.largeFilesReport(scan, base.toString)
 
-  def pathScan[R: _task: _filesystem: _config: _log: _sym](path: FilePath): Eff[R, PathScan] = path match {
+  def pathScan[R: _task: _filesystem: _config: _log](path: FilePath): Eff[R, PathScan] = path match {
 
     case f: File =>
       for {
@@ -87,22 +87,10 @@ object Scanner {
         }
       } yield childScans.combineAll(topN)
 
-    case Symlink(_, to) =>
-      for {
-        linksVisited <- get
-        scan <- if (linksVisited.contains(to))
-            PathScan.empty.pureEff[R]
-          else
-            modifyS.using(_ + to) >> pathScan(to)
-      } yield scan
-
     case Other(_) =>
       PathScan.empty.pureEff
   }
 
-  def modifyS[R, S](implicit member: State[S, ?] |= R) = new {
-    def using(f: S => S) = modify[R, S](f)
-  }
 
 
   def takeTopN[R: _config]: Eff[R, Monoid[PathScan]] = for {
@@ -198,7 +186,6 @@ object EffTypes {
   type _config[R] = Reader[ScanConfig, ?] <= R
   type _err[R] = Either[String, ?] <= R
   type _log[R] = Writer[Log, ?] <= R
-  type _sym[R] = State[Set[FilePath], ?] <= R
 }
 
 sealed trait Log {def msg: String}
