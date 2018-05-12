@@ -79,7 +79,7 @@ object Scanner {
         filesystem <- ask[R, Filesystem]
         topN <- takeTopN
         fileList <- taskDelay(filesystem.listFiles(dir))
-        childScans <- fileList.traverseA(pathScan[R](_))
+        childScans <- fileList.traverse(pathScan[R](_))
         _ <- {
           val dirCount = fileList.count(_.isInstanceOf[Directory])
           val fileCount = fileList.count(_.isInstanceOf[File])
