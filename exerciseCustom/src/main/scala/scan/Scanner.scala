@@ -132,12 +132,11 @@ trait Filesystem {
     val sideEffect = new SideEffect[FilesystemCmd] {
       def apply[X](fsc: FilesystemCmd[X]): X =
         (fsc match {
-          case MkFilePath(path)  => filePath(path)
 
-          case Length(file) =>  length(file)
+          //replace this handler with your FilesystemCmd cases here
+          case _ => ???
 
-          case ListFiles(directory) => listFiles(directory)
-        })  .asInstanceOf[X]
+        }).asInstanceOf[X]
 
       def applicative[X, Tr[_] : Traverse](ms: Tr[FilesystemCmd[X]]): Tr[X] =
         ms.map(apply)
