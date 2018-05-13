@@ -117,7 +117,6 @@ case object DefaultFilesystem extends Filesystem {
 case class AppConfig(scanConfig: ScanConfig, filesystem: Filesystem)
 object AppConfig {
 
-  implicit val _scanConfig: Lens[AppConfig, ScanConfig] = GenLens[AppConfig](_.scanConfig)
   implicit val _filesystem: Lens[AppConfig, Filesystem] = GenLens[AppConfig](_.filesystem)
 }
 
