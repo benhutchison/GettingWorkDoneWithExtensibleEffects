@@ -20,7 +20,14 @@ But here's a brief overview:
 
 It turns out that a huge variety and complexity of different program behaviours can be represented as an effectful value `F[A]`.
 
-![diagram](EffectfulFunctionalProgramming_VisualIntuition.png)
+<details>
+  <summary>Expand diagram: Effectful Functional Programming - a visual intuition</summary>
+  <p>
+
+  ![diagram](EffectfulFunctionalProgramming_VisualIntuition.png)
+
+  </p>
+</details>
 
 
 ### Libraries
