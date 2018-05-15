@@ -2,7 +2,9 @@
 
 A workshop on programming with *Effectful Functional Programming*. This can be described as a style of pure functional programming
 emphasizing the use of *effects*. It readily handles the complex or messy programming problems that are often encountered in industry.
-It has a close connection to the Monad and Applicative type classes, as they are how we build large effectful
+
+It has a close connection to the [Monad](https://typelevel.org/cats/typeclasses/monad.html) and
+[Applicative](https://typelevel.org/cats/typeclasses/applicative.html) type classes, as they are how we build large effectful
 programs out of small effectful programs.
 
 ### What are Effects?
@@ -17,6 +19,9 @@ But here's a brief overview:
  the `A` payload.
 
 It turns out that a huge variety and complexity of different program behaviours can be represented as an effectful value `F[A]`.
+
+![diagram](EffectfulFunctionalProgramming_VisualIntuition.png)
+
 
 ### Libraries
 
