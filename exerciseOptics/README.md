@@ -40,7 +40,7 @@ the number, `topN`, of the largest files that the scanner would keep track of. N
 models the applications config, has has these two config items as fields. We want to write the overall program purely in
 terms of `AppConfig` and transform its `Reader` effect into readers of the other two subtypes.
 
-Find `AppConfig` and its companion. Note that it has an implicit `Lens` declared between `AppConfig` and `Filesystem`.
+   Find `AppConfig` and its companion. Note that it has an implicit `Lens` declared between `AppConfig` and `Filesystem`.
 
 
 - Note that `pathScan` has a single reader effect `_appconfig`, but calls methods like `takeTopN` and `FileSize.ofFile`

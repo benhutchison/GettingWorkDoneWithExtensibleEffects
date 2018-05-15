@@ -37,7 +37,11 @@ object Scanner {
   def main(args: Array[String]): Unit = {
     val program = scanReport[R](args).map(println)
     
-    program.runReader(DefaultFilesystem: Filesystem).runEither.runAsync.attempt.runSyncUnsafe(1.minute).leftMap(_.toString).flatten
+    program.runReader(DefaultFilesystem: Filesystem).runEither.runAsync.attempt.
+      runSyncUnsafe(1.minute).leftMap(_.toString).flatten match {
+        case Right(report) => println(report)
+        case Left(msg) => println(s"Scan failed: $msg")
+      }
   }
 
   def scanReport[R: _task: _filesystem: _err](args: Array[String]): Eff[R, String] = for {

@@ -65,7 +65,6 @@ object Scanner {
     case f: File =>
       for {
         fs <- FileSize.ofFile(f)
-        _ <- tell(Log.debug(s"File ${fs.file.path} Size ${ReportFormat.formatByteString(fs.size)}"))
       } yield PathScan(SortedSet(fs), fs.size, 1)
 
     case dir: Directory =>

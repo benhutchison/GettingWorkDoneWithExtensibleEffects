@@ -1,8 +1,8 @@
 # Exercise 3: Error handling without exceptions
 
 Exceptions are "considered harmful" in functional programming. The core of the objection is that they
-require a special execution mode from the runtime, that has very different behaviour to nomrla execution.
-But using effects, its possible to implement exception-like behavior using pure functions and with no special runtime
+require a special execution mode from the runtime, that has very different behaviour to normal execution.
+But using effects, it's possible to implement exception-like behavior using pure functions and with no special runtime
  support, that can readily handle almost all error scenarios.
 
 In this version, there are two sources of errors:

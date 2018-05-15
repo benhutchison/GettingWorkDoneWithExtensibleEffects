@@ -43,7 +43,7 @@ object Scanner {
     }
   }
 
-  def scanReport[R: _task: _filesystem: _err](args: Array[String]): Eff[R, String] = for {
+  def scanReport[R: _task: _filesystem](args: Array[String]): Eff[R, String] = for {
     base <- optionEither(args.lift(0), s"Path to scan must be specified.\n$Usage")
 
     topN <- {

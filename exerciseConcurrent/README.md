@@ -3,7 +3,8 @@
 The scanning of a directory tree can be done in parallel by processing each subdirectory in separate tasks. Because we have
 lifted our program into `Task`s, it is easy to enable concurrent scanning.
 
-A good general principle for effectful programming is to declare which computations
+A good general principle for effectful programming is to declare the dependencies between computations (including their effects)
+using monad flatMaps, then the runtime can execute as much in parallel near automagically.
 
 ### :pencil: _Write Code_
 
@@ -19,7 +20,7 @@ Run the tests to verify your task based implementation still gives the correct o
 Run the scanner on a large directory tree. Do it several times as the results will likely include noise.
 Do you see a speed-up from concurrent scanning?
 
-You may see no improvement, or only a small improvement. This may be because your hard drive or SSD has limited capability
+You may see no improvement, or only a small % improvement (as I did). This may be because your hard drive or SSD has limited capability
 to serve requests in parallel.
 
 

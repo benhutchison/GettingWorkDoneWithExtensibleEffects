@@ -24,7 +24,9 @@ In this case, the state we'll be tracking (ie type `S`) will be `Set[FilePath]`
 
 - Add the member constraint to `pathScan` and `scanReport`
 
-- We need to interpret the state effect in `main`. We'll use the `evalStateZero[Set[FilePath]]` combinator. Eval here means
+- We need to interpret the state effect in `main`. We'll use the
+[`evalStateZero[Set[FilePath]]`](https://github.com/atnos-org/eff/blob/4d289be/shared/src/main/scala/org/atnos/eff/syntax/state.scala#L28)
+ combinator. Eval here means
 that the final state isn't returned, just the computed payload. The zero suffix indicates that the zero value of a
 `Monoid[Set[FilePath]]` in scope should be used as the initial state. That's coming in from `imports cats.implicits._`.
 The zero value of a set is `Set.empty`.
@@ -33,7 +35,7 @@ The zero value of a set is `Set.empty`.
 and/or `modify(f: S => S)` to run a state modification function. Your logic should check if the target of a symlink has been
 visited; if it has, then return an empty pathscan, while if it hasn't, add it to the visited set and invoke `pathScan` on the target.
 
-   This is a tricky task. Remember to look at the [solution(../solutionExerciseState/src/main/scala/scan/Scanner.scala)
+   This is a tricky task. Remember to look at the [solution](../solutionExerciseState/src/main/scala/scan/Scanner.scala)
    for guidance if you get stuck.
 
 ### :arrow_forward: _Run Code_

@@ -4,8 +4,7 @@ The `Writer[L, ?]` effect lets the computation emit additional values of type `L
 used to functional logging, but you could also view the log value as an appendix or supplimentary information about the
 computation.
 
-Exercise 5 is to study a use-case of functional logging, and how "logs-as-values" lets us easily
-write unit tests around the log output.
+This exercise is a use-case of functional logging and how "logs-as-values" lets us easily write unit tests around the log output.
 
 
 ## Tasks
@@ -17,7 +16,7 @@ write unit tests around the log output.
    - In `PathScan.scan`, the `tell` operator is used to emit `Log` values. Because `tell` just emits a log, it has type
    `Eff[R, Unit]`. So an underscore is used on the lefthand-side of the for (eg `_ <- tell(x)`).
 
-   - In `main`, the interpretation of the Eff program now includes a `runWriterUnsafe` step. This is obe of several
+   - In `main`, the interpretation of the Eff program now includes a `runWriterUnsafe` step. This is one of several
    approaches to logging offerred by Eff, where we send a side-effecting handler function (eg `println`)
    into the interpreter, that logs each event as its emitted, rather than returning an accumulation. Its not pure, but it
    has the advantage of not accumulating data in memory during execution.

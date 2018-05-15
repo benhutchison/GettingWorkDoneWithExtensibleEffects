@@ -62,7 +62,7 @@ Examine `main`. Note how we build the Eff program first, then *interpret* (run) 
 
 ### :pencil: _Write Code_
 
-Extend the use of the Reader effect to `PathScan.takeTopN` and `FileSize.ofFile`. Both of these methods should be converted
+Extend the use of the Reader effect to `takeTopN` and `FileSize.ofFile`. Both of these methods should be converted
 to:
 
 - Accept a type parameter `R` and one of the member typeclasses (`_filesystem` and `_config`) denoting the dependency they

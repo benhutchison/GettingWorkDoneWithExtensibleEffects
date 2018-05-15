@@ -3,8 +3,8 @@
 In previous examples, we've been using `Task` to wrap code that is side-effecting, deferring its effects until the the
 Eff program is interpreted, following the style of Haskell's `IO`.
 
-This style, whereby all IO is wrapped in a single catch all type, is coming under increasing challenge. It ought to be
-possible to be more descriptive about what type of external effects a program has, rather than simply acknowledging that
+This style, whereby all IO is wrapped in a single catch-all type, is coming under increasing challenge. It ought to be
+possible to be more descriptive about what type of external effects a program has, beyond simply acknowledging that
 they exist.
 
 In this example, we'll look at how custom effects can be used for this goal. We'll take the filesystem related operations
