@@ -26,6 +26,8 @@ import monix.execution.Scheduler.Implicits.global
 
 class ScannerSpec extends mutable.Specification {
 
+  import EffOptics._
+
   case class MockFilesystem(directories: Map[Directory, List[FilePath]], fileSizes: Map[File, Long]) extends Filesystem {
 
     def length(file: File) = fileSizes.getOrElse(file, throw new IOException())
@@ -57,7 +59,7 @@ class ScannerSpec extends mutable.Specification {
     )
 
     val program = Scanner.pathScan[Scanner.R](base)
-    val actual = program.runReader(ScanConfig(2)).runReader(fs).runAsync.runSyncUnsafe(3.seconds)
+    val actual = program.runReader(AppConfig(ScanConfig(2), fs)).runAsync.runSyncUnsafe(3.seconds)
     val expected = new PathScan(SortedSet(FileSize(sub3, 3), FileSize(base2, 2)), 7, 4)
 
     actual.mustEqual(expected)
