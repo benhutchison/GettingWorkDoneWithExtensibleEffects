@@ -116,12 +116,12 @@ To list all exercise- and solution- subproject names:
 
 Try running the file scanner (ie `main` method) of subproject `solutionExerciseClassic` on the current directory.
 ```
-> solutionExerciseClassic/run .`
+> solutionExerciseClassic/run .
 ```
 
 To compile sources in subproject `exercise1`:
 ```
-> exerciseClassic/compile`
+> exerciseClassic/compile
 ```
 
 To run any unit tests (in `src/test/scala/*`) under subproject `exerciseClassic`
