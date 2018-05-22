@@ -71,6 +71,6 @@ class ScannerSpec extends mutable.Specification {
   "Report Format" ! {actual.mustEqual(expected)}
 
   "Logs messages are emitted (ignores order due to non-determinstic concurrent execution)" ! {
-    logs.forall(expectedLogs.contains)
+    expectedLogs.forall(logs.contains)
   }
 }
