@@ -28,7 +28,7 @@ We choose Monix tasks over Scala's default Futures because of Monix's
 ### :pencil: _Write Code_
 
 - The top level `main` still returns `Unit`. It builds a program, a chain of `Task`s, but they'll have no effect until they're run.
-  Use `runSyncUnsafe(1.minute)` to run the tasks. The word Unsafe in it's name indicates that it will cause side-effects.
+  Use `runSyncUnsafe(1.minute)` to run the tasks. The word Unsafe in its name indicates that it will cause side-effects.
   The idea with Tasks is to run them at only one at the top of your top program.
 
 - There is a compile error in `pathScan`. The `map` method no longer has the correct type, because we want to traverse a list

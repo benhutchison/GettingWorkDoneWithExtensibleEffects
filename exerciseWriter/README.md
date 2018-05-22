@@ -18,8 +18,8 @@ This exercise is a use-case of functional logging and how "logs-as-values" lets 
 
    - In `main`, the interpretation of the Eff program now includes a `runWriterUnsafe` step. This is one of several
    approaches to logging offerred by Eff, where we send a side-effecting handler function (eg `println`)
-   into the interpreter, that logs each event as its emitted, rather than returning an accumulation. Its not pure, but it
-   has the advantage of not accumulating data in memory during execution.
+   into the interpreter, that logs each event as it is emitted, rather than returning an accumulation. It's not pure,
+   but it has the advantage of not accumulating data in memory during execution.
 
 ### :arrow_forward: _Run Code_
 
@@ -37,7 +37,7 @@ Make the test pass by adding the appropriate `tell` statement to the `File` case
 ### :pencil: _Write Code_
 
 - Measure the time the overall scan took. Take start and end times in `scanReport`, and use a `tell` to log the elapsed
-millis. Ensure your calls to the clock are wrapped in `taskDelay` effects to ensure the clock timings are taken when the program *runs*, and not when its is *created*.
+millis. Ensure your calls to the clock are wrapped in `taskDelay` effects to ensure the clock timings are taken when the program *runs*, and not when it is *created*.
 
 - Try changing the interpretation in main to use the plain `runWriter`. What does the program return now? How can you
 print the logs?

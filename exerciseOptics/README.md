@@ -62,7 +62,7 @@ which is a "higher kinded function" from an `A[_]` to a `B[_]`.
 - Complete the implementation of the transform `apply` method in `EffOptics.readerLens`; ie how can you use a `Lens[S, T]`
 to build a `Reader[T]` from a `Reader[S, ?]`?
 
-- Add a second lens in `AppConfig` to `ScanConfig`, using Monocle's `GenLens` macro. Ensure its marked `implicit` so it
+- Add a second lens in `AppConfig` to `ScanConfig`, using Monocle's `GenLens` macro. Ensure it's marked `implicit` so it
 can passed by the compiler when effects need to be transformed.
 
 
