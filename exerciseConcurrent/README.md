@@ -43,5 +43,5 @@ Try varying the batch size parameter, by doubling or halving it progressively.
 Take multiple timings at each batch size. Is 32 the optimal value on your hardware or something else?
 
 - Also, if you have a multicore machine, observe the CPU usage as you change the batch size. You may see it rise with
-a smaller batch size, even if overall performance worsens. This is because its doing more work in parallel but wasting
+a smaller batch size, even if overall performance worsens. This is because it's doing more work in parallel but wasting
 effort on switching work between threads.
