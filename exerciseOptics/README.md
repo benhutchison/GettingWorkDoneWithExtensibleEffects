@@ -37,7 +37,7 @@ work to follow this exercise.
 
 - Recall in previous examples we had two distinct readers for two different type of configuration, the `Filesystem` and
 the number, `topN`, of the largest files that the scanner would keep track of. Now, there is a new class `AppConfig` that
-models the applications config, has has these two config items as fields. We want to write the overall program purely in
+models the applications config, which has these two config items as fields. We want to write the overall program purely in
 terms of `AppConfig` and transform its `Reader` effect into readers of the other two subtypes.
 
    Find `AppConfig` and its companion. Note that it has an implicit `Lens` declared between `AppConfig` and `Filesystem`.
