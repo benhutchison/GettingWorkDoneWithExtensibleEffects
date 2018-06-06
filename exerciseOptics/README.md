@@ -17,7 +17,7 @@ However, it's sometimes necessary or convenient to be able to combine effects fr
 together. You may need to integrate modules written by different authors that both focus on types from their own modules,
 for example. So we'll look at how you can do that:
 
-- To transform a `Either[E, ?]` into `Either[E, ?]`, we simply need a function `E => E1` and we can `leftMap` it (`Either`
+- To transform a `Either[E, ?]` into `Either[E1, ?]`, we simply need a function `E => E1` and we can `leftMap` it (`Either`
 is a *covariant* functor). `Writer` works similarly.
 
 - To transform a `Reader[A, ?]` into `Reader[B, ?]`, we need a function `B => A` to transform the input while we read it
